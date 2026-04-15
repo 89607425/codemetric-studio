@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>自动化软件度量平台</title>
+  <style>
+    :root {
+      --bg: #f3f5f9;
+      --panel: #ffffff;
+      --line: #e5e8ef;
+      --text: #2b2f36;
+      --muted: #8b94a7;
+      --topbar: #545b66;
+      --brand: #54d48b;
+      --primary: #4f8df7;
+      --active: #f0f6ff;
+      --active-text: #2d74f4;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      background: var(--bg);
+      font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+    }
+
+    .topbar {
+      height: 64px;
+      background: var(--topbar);
+      display: flex;
+      align-items: center;
+      padding: 0 18px;
+      color: #fff;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 34px;
+      color: var(--brand);
+      line-height: 1;
+    }
+
+    .brand-title {
+      font-size: 34px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.4px;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      min-height: calc(100vh - 64px);
+    }
+
+    .sidebar {
+      background: #f0f2f6;
+      border-right: 1px solid var(--line);
+      padding: 16px 12px;
+    }
+
+    .hamburger {
+      color: #8b909b;
+      font-size: 20px;
+      padding: 4px 10px 14px;
+    }
+
+    .menu {
+      display: grid;
+      gap: 8px;
+    }
+
+    .menu-btn {
+      border: none;
+      background: transparent;
+      color: #3d4553;
+      text-align: left;
+      font-size: 24px;
+      border-radius: 8px;
+      padding: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .menu-btn .i {
+      width: 26px;
+      display: inline-flex;
+      justify-content: center;
+      color: #8a919f;
+      font-size: 18px;
+    }
+
+    .menu-btn.active {
+      background: var(--active);
+      color: var(--active-text);
+      font-weight: 600;
+    }
+
+    .menu-btn.active .i { color: var(--active-text); }
+
+    .main {
+      padding: 14px 16px;
+      overflow: auto;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      box-shadow: 0 1px 2px rgba(20, 22, 30, 0.03);
+    }
+
+    .panel-title {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .panel-body { padding: 12px 14px; }
+    .hidden { display: none !important; }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(140px, 1fr));
+      gap: 10px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      font-size: 20px;
+      color: #5e6677;
+    }
+
+    input[type="number"], textarea {
+      width: 100%;
+      border: 1px solid #d8dfec;
+      border-radius: 5px;
+      padding: 8px 10px;
+      font-size: 20px;
+      color: #2f3542;
+      background: #fff;
+    }
+
+    textarea {
+      min-height: 180px;
+      resize: vertical;
+      font-family: Menlo, Consolas, monospace;
+      font-size: 16px;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 4px;
+      height: 36px;
+      padding: 0 14px;
+      cursor: pointer;
+      font-size: 20px;
+    }
+
+    .btn.primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn.secondary {
+      background: #f1f5ff;
+      color: #3d73dc;
+      border: 1px solid #c9d9ff;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(120px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .card {
+      background: #fafcff;
+      border: 1px solid #e5eaf5;
+      border-radius: 6px;
+      padding: 10px;
+    }
+
+    .card .k { font-size: 16px; color: #7a8397; }
+    .card .v { font-size: 28px; margin-top: 4px; color: #2b3250; font-weight: 700; }
+
+    .chart-wrap {
+      padding: 12px;
+      min-height: 560px;
+    }
+
+    #radarHost {
+      width: 100%;
+      height: 520px;
+      border: 1px solid #edf0f7;
+      border-radius: 4px;
+      background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .legend-item {
+      border: none;
+      background: transparent;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-size: 22px;
+      color: #475064;
+      padding: 2px 0;
+    }
+
+    .legend-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    .legend-item.dim { opacity: 0.35; }
+
+    .right-panel { padding: 14px; }
+
+    .hint {
+      color: #7a8191;
+      font-size: 20px;
+      margin: 10px 0;
+      line-height: 1.4;
+    }
+
+    .upload-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .file-name {
+      margin: 10px 0 14px;
+      color: #5f6677;
+      font-size: 20px;
+      word-break: break-all;
+    }
+
+    .summary {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--line);
+      display: grid;
+      gap: 8px;
+      font-size: 20px;
+      color: #60697a;
+    }
+
+    .table-panel {
+      margin-top: 14px;
+      overflow: hidden;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      max-height: calc(100vh - 340px);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 980px;
+      background: #fff;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      background: #fafbff;
+      z-index: 1;
+      font-weight: 600;
+    }
+
+    th, td {
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      padding: 12px 14px;
+      font-size: 23px;
+      white-space: nowrap;
+    }
+
+    .class-link {
+      color: #4b7ef0;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .class-link:hover { text-decoration: underline; }
+    .row-active { background: #f7fbff; }
+
+    .status {
+      margin-top: 8px;
+      color: #687286;
+      font-size: 20px;
+      line-height: 1.5;
+    }
+
+    .status.error { color: #bd3f3f; }
+
+    @media (max-width: 1200px) {
+      .workspace { grid-template-columns: 1fr; }
+      .app { grid-template-columns: 76px 1fr; }
+      .menu-btn .txt { display: none; }
+      .menu-btn { justify-content: center; }
+      .hamburger { text-align: center; }
+      .grid-3 { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
+      .chart-wrap { min-height: 520px; }
+      #radarHost { height: 460px; }
+      .cards { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">△△</div>
+    <div class="brand-title">自动化软件度量平台</div>
+  </header>
+
+  <div class="app">
+    <aside class="sidebar">
+      <div class="hamburger">≡</div>
+      <nav class="menu" id="menuNav">
+        <button class="menu-btn" data-key="fp"><span class="i">🏠</span><span class="txt">功能点度量</span></button>
+        <button class="menu-btn" data-key="uc"><span class="i">💡</span><span class="txt">用例图度量</span></button>
+        <button class="menu-btn active" data-key="oo"><span class="i">✈</span><span class="txt">面向对象度量</span></button>
+        <button class="menu-btn" data-key="cfg"><span class="i">🔗</span><span class="txt">控制流图度量</span></button>
+        <button class="menu-btn" data-key="loc"><span class="i">📎</span><span class="txt">代码行度量</span></button>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <section class="workspace">
+        <article class="panel">
+          <div class="panel-title" id="sectionTitle">面向对象度量总览</div>
+
+          <div id="tab-oo" class="tab-pane">
+            <div class="chart-wrap">
+              <div class="legend" id="classLegend"></div>
+              <div id="radarHost"></div>
+              <div class="status" id="chartStatus"></div>
+            </div>
+          </div>
+
+          <div id="tab-fp" class="tab-pane hidden">
+            <div class="panel-body">
+              <div class="grid-3">
+                <label class="field">EI 数量<input id="fp-ei" type="number" min="0" value="0" /></label>
+                <label class="field">EO 数量<input id="fp-eo" type="number" min="0" value="0" /></label>
+                <label class="field">EQ 数量<input id="fp-eq" type="number" min="0" value="0" /></label>
+                <label class="field">ILF 数量<input id="fp-ilf" type="number" min="0" value="0" /></label>
+                <label class="field">EIF 数量<input id="fp-eif" type="number" min="0" value="0" /></label>
+                <label class="field">VAF(0.65~1.35)<input id="fp-vaf" type="number" step="0.01" min="0.65" max="1.35" value="1.00" /></label>
+              </div>
+              <div class="row">
+                <button class="btn primary" id="fp-calc">计算功能点</button>
+              </div>
+              <div class="cards" id="fp-cards"></div>
+              <div class="status" id="fp-status"></div>
+            </div>
+          </div>
+
+          <div id="tab-uc" class="tab-pane hidden">
+            <div class="panel-body">
+              <div class="grid-3">
+                <label class="field">简单参与者<input id="uc-as" type="number" min="0" value="0" /></label>
+                <label class="field">一般参与者<input id="uc-aa" type="number" min="0" value="0" /></label>
+                <label class="field">复杂参与者<input id="uc-ac" type="number" min="0" value="0" /></label>
+                <label class="field">简单用例<input id="uc-us" type="number" min="0" value="0" /></label>
+                <label class="field">一般用例<input id="uc-ua" type="number" min="0" value="0" /></label>
+                <label class="field">复杂用例<input id="uc-uc" type="number" min="0" value="0" /></label>
+                <label class="field">TCF<input id="uc-tcf" type="number" step="0.01" min="0" value="1.00" /></label>
+                <label class="field">ECF<input id="uc-ecf" type="number" step="0.01" min="0" value="1.00" /></label>
+              </div>
+              <div class="row">
+                <button class="btn primary" id="uc-calc">计算用例点</button>
+              </div>
+              <div class="cards" id="uc-cards"></div>
+              <div class="status" id="uc-status"></div>
+            </div>
+          </div>
+
+          <div id="tab-cfg" class="tab-pane hidden">
+            <div class="panel-body">
+              <label class="field">粘贴方法代码（Java/伪代码）
+                <textarea id="cfg-code" placeholder="例如: if/for/while/case/catch/&&/|| ..."></textarea>
+              </label>
+              <div class="row">
+                <button class="btn primary" id="cfg-calc">计算圈复杂度</button>
+              </div>
+              <div class="cards" id="cfg-cards"></div>
+              <div class="status" id="cfg-status"></div>
+            </div>
+          </div>
+
+          <div id="tab-loc" class="tab-pane hidden">
+            <div class="panel-body">
+              <label class="field">粘贴代码文本
+                <textarea id="loc-code" placeholder="支持统计总行、空行、注释行、有效代码行"></textarea>
+              </label>
+              <div class="row">
+                <button class="btn primary" id="loc-calc">计算代码行</button>
+                <button class="btn secondary" id="loc-use-project">使用当前项目分析结果</button>
+              </div>
+              <div class="cards" id="loc-cards"></div>
+              <div class="status" id="loc-status"></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel right-panel">
+          <div class="upload-row">
+            <button class="btn primary" id="uploadBtn">点击上传</button>
+            <button class="btn secondary" id="startBtn">开始类图分析</button>
+          </div>
+          <input id="fileInput" type="file" accept=".json,.oom" hidden />
+          <div class="hint">优先上传本工具生成的 <code>metrics.json</code>；<code>.oom</code> 当前仅记录文件名。</div>
+          <div class="file-name" id="fileName">未选择文件，默认读取 /out/metrics.json</div>
+          <div class="upload-row">
+            <button class="btn secondary" id="exportXmlBtn">导出XML格式</button>
+          </div>
+
+          <div class="summary" id="summaryBox"></div>
+          <div class="status" id="rightStatus"></div>
+        </article>
+      </section>
+
+      <section class="panel table-panel" id="ooTablePanel">
+        <div class="panel-title">类级指标明细</div>
+        <div class="table-wrap" id="tableWrap"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="./main.js"></script>
+</body>
+</html>
