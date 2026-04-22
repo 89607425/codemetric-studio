@@ -5,6 +5,13 @@ const state = {
   selectedClass: null,
   uploadedFile: null,
   activeTab: 'oo',
+  fpCounts: {
+    EI: { low: 0, avg: 0, high: 0 },
+    EO: { low: 0, avg: 0, high: 0 },
+    EQ: { low: 0, avg: 0, high: 0 },
+    ILF: { low: 0, avg: 0, high: 0 },
+    EIF: { low: 0, avg: 0, high: 0 },
+  },
 };
 
 const METRIC_AXES = ['CBO', 'NOO', 'NOC', 'NOA', 'DIT', 'CS'];
@@ -71,6 +78,9 @@ function switchTab(tabKey) {
     renderLegend();
     renderRadar();
     renderTable();
+  }
+  if (tabKey === 'cfg') {
+    populateCfgSelectors();
   }
 }
 
@@ -316,22 +326,190 @@ function renderTable() {
 }
 
 function calcFunctionPoint() {
-  const ei = num('fp-ei');
-  const eo = num('fp-eo');
-  const eq = num('fp-eq');
-  const ilf = num('fp-ilf');
-  const eif = num('fp-eif');
   const vaf = num('fp-vaf');
-
-  const ufp = ei * 4 + eo * 5 + eq * 4 + ilf * 10 + eif * 7;
+  const c = state.fpCounts;
+  const ufp =
+    c.EI.low * 3 + c.EI.avg * 4 + c.EI.high * 6
+    + c.EO.low * 4 + c.EO.avg * 5 + c.EO.high * 7
+    + c.EQ.low * 3 + c.EQ.avg * 4 + c.EQ.high * 6
+    + c.ILF.low * 7 + c.ILF.avg * 10 + c.ILF.high * 15
+    + c.EIF.low * 5 + c.EIF.avg * 7 + c.EIF.high * 10;
   const fp = +(ufp * vaf).toFixed(2);
 
   renderCards('fp-cards', [
     ['UFP', ufp],
     ['VAF', vaf.toFixed(2)],
     ['调整后 FP', fp],
+    ['EI(简/中/复)', `${c.EI.low}/${c.EI.avg}/${c.EI.high}`],
+    ['EO(简/中/复)', `${c.EO.low}/${c.EO.avg}/${c.EO.high}`],
+    ['EQ(简/中/复)', `${c.EQ.low}/${c.EQ.avg}/${c.EQ.high}`],
+    ['ILF(简/中/复)', `${c.ILF.low}/${c.ILF.avg}/${c.ILF.high}`],
+    ['EIF(简/中/复)', `${c.EIF.low}/${c.EIF.avg}/${c.EIF.high}`],
   ]);
-  setStatus('fp-status', '公式：UFP = 4*EI + 5*EO + 4*EQ + 10*ILF + 7*EIF；FP = UFP * VAF');
+  setStatus('fp-status', '已按教学口径计算：事务功能由 FTR/DER 判级，数据功能由 RET/DET 判级；UFP 为分档加权和，AFP = UFP * VAF。');
+}
+
+function txComplexity(type, ftr, der) {
+  if (type === 'EI') {
+    if (ftr <= 1) {
+      if (der <= 4) return 'low';
+      if (der <= 15) return 'low';
+      return 'avg';
+    }
+    if (ftr === 2) {
+      if (der <= 4) return 'low';
+      if (der <= 15) return 'avg';
+      return 'high';
+    }
+    if (der <= 4) return 'avg';
+    if (der <= 15) return 'high';
+    return 'high';
+  }
+
+  // EO / EQ: 常见教学口径按 IFPUG 复杂度矩阵
+  if (ftr <= 1) {
+    if (der <= 5) return 'low';
+    if (der <= 19) return 'low';
+    return 'avg';
+  }
+  if (ftr <= 3) {
+    if (der <= 5) return 'low';
+    if (der <= 19) return 'avg';
+    return 'high';
+  }
+  if (der <= 5) return 'avg';
+  if (der <= 19) return 'high';
+  return 'high';
+}
+
+function dataComplexity(type, ret, det) {
+  const lowDet = det <= 19;
+  const midDet = det >= 20 && det <= 50;
+  if (type === 'ILF') {
+    if (ret === 1) {
+      if (lowDet) return 'low';
+      if (midDet) return 'low';
+      return 'avg';
+    }
+    if (ret <= 5) {
+      if (lowDet) return 'low';
+      if (midDet) return 'avg';
+      return 'high';
+    }
+    if (lowDet) return 'avg';
+    if (midDet) return 'high';
+    return 'high';
+  }
+
+  // EIF
+  if (ret === 1) {
+    if (lowDet) return 'low';
+    if (midDet) return 'low';
+    return 'avg';
+  }
+  if (ret <= 5) {
+    if (lowDet) return 'low';
+    if (midDet) return 'avg';
+    return 'high';
+  }
+  if (lowDet) return 'avg';
+  if (midDet) return 'high';
+  return 'high';
+}
+
+function addTransactionFunction() {
+  const type = byId('fp-tx-type').value;
+  const ftr = Math.max(0, Math.floor(num('fp-tx-ftr')));
+  const der = Math.max(0, Math.floor(num('fp-tx-der')));
+  const level = txComplexity(type, ftr, der);
+  state.fpCounts[type][level] += 1;
+  setStatus('fp-status', `已添加事务功能：${type}，FTR=${ftr}，DER=${der}，复杂度=${level === 'low' ? '简单' : level === 'avg' ? '一般' : '复杂'}。`);
+  calcFunctionPoint();
+}
+
+function addDataFunction() {
+  const type = byId('fp-data-type').value;
+  const ret = Math.max(0, Math.floor(num('fp-data-ret')));
+  const det = Math.max(0, Math.floor(num('fp-data-det')));
+  const level = dataComplexity(type, ret, det);
+  state.fpCounts[type][level] += 1;
+  setStatus('fp-status', `已添加数据功能：${type}，RET=${ret}，DET=${det}，复杂度=${level === 'low' ? '简单' : level === 'avg' ? '一般' : '复杂'}。`);
+  calcFunctionPoint();
+}
+
+function resetFunctionPointCounts() {
+  state.fpCounts = {
+    EI: { low: 0, avg: 0, high: 0 },
+    EO: { low: 0, avg: 0, high: 0 },
+    EQ: { low: 0, avg: 0, high: 0 },
+    ILF: { low: 0, avg: 0, high: 0 },
+    EIF: { low: 0, avg: 0, high: 0 },
+  };
+  setStatus('fp-status', '已重置功能点计数。');
+  calcFunctionPoint();
+}
+
+function inferTxType(methodName) {
+  const n = String(methodName || '').toLowerCase();
+  if (/^(add|create|insert|save|update|delete|remove|set|register)/.test(n)) {
+    return 'EI';
+  }
+  if (/^(get|find|query|list|search|count|check|load)/.test(n)) {
+    return 'EQ';
+  }
+  return 'EO';
+}
+
+function inferDataType(className) {
+  const n = String(className || '').toLowerCase();
+  if (/(client|proxy|external|remote|adapter|gateway)/.test(n)) {
+    return 'EIF';
+  }
+  return 'ILF';
+}
+
+function autoEstimateFunctionPoint() {
+  if (!state.raw) {
+    setStatus('fp-status', '没有可用 metrics 数据，请先加载 /out/metrics.json 或上传 JSON。', true);
+    return;
+  }
+
+  state.fpCounts = {
+    EI: { low: 0, avg: 0, high: 0 },
+    EO: { low: 0, avg: 0, high: 0 },
+    EQ: { low: 0, avg: 0, high: 0 },
+    ILF: { low: 0, avg: 0, high: 0 },
+    EIF: { low: 0, avg: 0, high: 0 },
+  };
+
+  const methods = Array.isArray(state.raw.methods) ? state.raw.methods : [];
+  const classes = Array.isArray(state.raw.classes) ? state.raw.classes : [];
+  const classByName = new Map(classes.map((c) => [c.className, c]));
+
+  let txCount = 0;
+  let dataCount = 0;
+
+  for (const m of methods) {
+    const owner = classByName.get(m.className) || {};
+    const type = inferTxType(m.methodName);
+    const ftr = Math.max(0, Number(owner.cbo || 0));
+    const der = Math.max(1, Math.round(Number(m.loc || 0) / 3 + Number(m.cyclomaticComplexity || 1)));
+    const level = txComplexity(type, ftr, der);
+    state.fpCounts[type][level] += 1;
+    txCount += 1;
+  }
+
+  for (const c of classes) {
+    const type = inferDataType(c.className);
+    const ret = Math.max(1, Number(c.noc || 0) + 1);
+    const det = Math.max(1, Number(c.wmc || 0) * 2 + Number(c.cbo || 0));
+    const level = dataComplexity(type, ret, det);
+    state.fpCounts[type][level] += 1;
+    dataCount += 1;
+  }
+
+  calcFunctionPoint();
+  setStatus('fp-status', `已自动估算：事务功能 ${txCount} 个，数据功能 ${dataCount} 个。说明：该结果为启发式推断，请按实际业务复核。`);
 }
 
 function calcUseCasePoint() {
@@ -341,23 +519,94 @@ function calcUseCasePoint() {
   const us = num('uc-us');
   const ua = num('uc-ua');
   const uc = num('uc-uc');
-  const tcf = num('uc-tcf');
-  const ecf = num('uc-ecf');
+  const tFactor = num('uc-tfactor');
+  const eFactor = num('uc-efactor');
 
   const uaw = as * 1 + aa * 2 + ac * 3;
-  const uucw = us * 5 + ua * 10 + uc * 15;
-  const uucp = uaw + uucw;
-  const ucp = +(uucp * tcf * ecf).toFixed(2);
+  const uuc = us * 5 + ua * 10 + uc * 15;
+  const uucp = uaw + uuc;
+  const tcf = +(0.6 + (0.01 * tFactor)).toFixed(2);
+  const ef = +(1.4 + (-0.03 * eFactor)).toFixed(2);
+  const upc = +(uucp * tcf * ef).toFixed(2);
 
   renderCards('uc-cards', [
     ['UAW', uaw],
-    ['UUCW', uucw],
+    ['UUC', uuc],
     ['UUCP', uucp],
+    ['TFactor', tFactor.toFixed(0)],
+    ['EFactor', eFactor.toFixed(0)],
     ['TCF', tcf.toFixed(2)],
-    ['ECF', ecf.toFixed(2)],
-    ['UCP', ucp],
+    ['EF', ef.toFixed(2)],
+    ['UPC', upc],
   ]);
-  setStatus('uc-status', '公式：UUCP = UAW + UUCW；UCP = UUCP * TCF * ECF');
+  setStatus('uc-status', '公式：UUCP = UAW + UUC；TCF = 0.6 + 0.01*TFactor；EF = 1.4 - 0.03*EFactor；UPC = UUCP * TCF * EF');
+}
+
+function setUcInput(id, value) {
+  const el = byId(id);
+  if (el) {
+    el.value = String(Math.max(0, Math.round(value)));
+  }
+}
+
+function autoEstimateUseCasePoint() {
+  if (!state.raw) {
+    setStatus('uc-status', '没有可用 metrics 数据，请先加载 /out/metrics.json 或上传 JSON。', true);
+    return;
+  }
+
+  const classes = Array.isArray(state.raw.classes) ? state.raw.classes : [];
+  const methods = Array.isArray(state.raw.methods) ? state.raw.methods : [];
+  const alerts = Array.isArray(state.raw.alerts) ? state.raw.alerts : [];
+
+  let as = 0;
+  let aa = 0;
+  let ac = 0;
+  for (const c of classes) {
+    const name = String(c.className || '').toLowerCase();
+    const score = Number(c.cbo || 0) + Number(c.wmc || 0);
+    if (/(controller|api|gateway|facade)/.test(name) || score >= 12) {
+      ac += 1;
+    } else if (/(service|manager|handler)/.test(name) || score >= 6) {
+      aa += 1;
+    } else {
+      as += 1;
+    }
+  }
+
+  let us = 0;
+  let ua = 0;
+  let uc = 0;
+  for (const m of methods) {
+    const mName = String(m.methodName || '').toLowerCase();
+    const complexity = Number(m.cyclomaticComplexity || 1);
+    const loc = Number(m.loc || 0);
+    if (complexity >= 8 || loc >= 30 || /(process|workflow|orchestrate)/.test(mName)) {
+      uc += 1;
+    } else if (complexity >= 4 || loc >= 12 || /(update|create|delete|submit|handle)/.test(mName)) {
+      ua += 1;
+    } else {
+      us += 1;
+    }
+  }
+
+  const avgCbo = classes.length ? classes.reduce((s, c) => s + Number(c.cbo || 0), 0) / classes.length : 0;
+  const avgComplexity = methods.length ? methods.reduce((s, m) => s + Number(m.cyclomaticComplexity || 0), 0) / methods.length : 0;
+  const avgDit = classes.length ? classes.reduce((s, c) => s + Number(c.dit || 0), 0) / classes.length : 0;
+  const tFactor = Math.max(0, Math.min(50, Math.round(avgCbo * 4 + avgComplexity * 1.5 + alerts.length * 2)));
+  const eFactor = Math.max(0, Math.min(50, Math.round(8 + avgDit * 3 + Math.max(0, avgComplexity - 2) * 1.2)));
+
+  setUcInput('uc-as', as);
+  setUcInput('uc-aa', aa);
+  setUcInput('uc-ac', ac);
+  setUcInput('uc-us', us);
+  setUcInput('uc-ua', ua);
+  setUcInput('uc-uc', uc);
+  setUcInput('uc-tfactor', tFactor);
+  setUcInput('uc-efactor', eFactor);
+
+  calcUseCasePoint();
+  setStatus('uc-status', `已自动估算：参与者(简/中/复)=${as}/${aa}/${ac}，用例(简/中/复)=${us}/${ua}/${uc}。TFactor=${tFactor}，EFactor=${eFactor}（启发式，建议人工复核）。`);
 }
 
 function calcCfgComplexity() {
@@ -381,6 +630,93 @@ function calcCfgComplexity() {
     ['if/for/while/case/catch', ifCount + forCount + whileCount + caseCount + catchCount],
   ]);
   setStatus('cfg-status', `统计明细：if=${ifCount}, for=${forCount}, while=${whileCount}, case=${caseCount}, catch=${catchCount}, &&=${andCount}, ||=${orCount}, ?=${ternaryCount}`);
+}
+
+function populateCfgSelectors() {
+  const classSelect = byId('cfg-class-select');
+  const methodSelect = byId('cfg-method-select');
+  if (!classSelect || !methodSelect) {
+    return;
+  }
+
+  const methods = Array.isArray(state.raw?.methods) ? state.raw.methods : [];
+  const classNames = [...new Set(methods.map((m) => m.className).filter(Boolean))].sort();
+  classSelect.innerHTML = '';
+  const defaultClassOption = document.createElement('option');
+  defaultClassOption.value = '';
+  defaultClassOption.textContent = '请选择类';
+  classSelect.appendChild(defaultClassOption);
+  for (const name of classNames) {
+    const option = document.createElement('option');
+    option.value = String(name);
+    option.textContent = String(name);
+    classSelect.appendChild(option);
+  }
+
+  methodSelect.innerHTML = '';
+  const defaultMethodOption = document.createElement('option');
+  defaultMethodOption.value = '';
+  defaultMethodOption.textContent = '请选择方法';
+  methodSelect.appendChild(defaultMethodOption);
+}
+
+function onCfgClassChange() {
+  const className = byId('cfg-class-select').value;
+  const methodSelect = byId('cfg-method-select');
+  if (!methodSelect) {
+    return;
+  }
+  const methods = Array.isArray(state.raw?.methods) ? state.raw.methods : [];
+  const filtered = methods
+    .filter((m) => m.className === className)
+    .sort((a, b) => String(a.methodName).localeCompare(String(b.methodName)));
+
+  methodSelect.innerHTML = '';
+  const defaultOption = document.createElement('option');
+  defaultOption.value = '';
+  defaultOption.textContent = '请选择方法';
+  methodSelect.appendChild(defaultOption);
+  filtered.forEach((m, idx) => {
+    const option = document.createElement('option');
+    option.value = String(idx);
+    option.textContent = `${m.methodName} (CC=${Number(m.cyclomaticComplexity || 0)}, LOC=${Number(m.loc || 0)})`;
+    methodSelect.appendChild(option);
+  });
+}
+
+function calcCfgFromMetrics() {
+  if (!state.raw || !Array.isArray(state.raw.methods)) {
+    setStatus('cfg-status', '没有可用 metrics 数据，请先加载 /out/metrics.json 或上传 JSON。', true);
+    return;
+  }
+  const className = byId('cfg-class-select').value;
+  const methodIndex = byId('cfg-method-select').value;
+  if (!className) {
+    setStatus('cfg-status', '请先选择类。', true);
+    return;
+  }
+  if (methodIndex === '') {
+    setStatus('cfg-status', '请先选择方法。', true);
+    return;
+  }
+
+  const methods = state.raw.methods
+    .filter((m) => m.className === className)
+    .sort((a, b) => String(a.methodName).localeCompare(String(b.methodName)));
+  const method = methods[Number(methodIndex)];
+  if (!method) {
+    setStatus('cfg-status', '未找到方法，请重新选择。', true);
+    return;
+  }
+
+  const complexity = Number(method.cyclomaticComplexity || 1);
+  const loc = Number(method.loc || 0);
+  renderCards('cfg-cards', [
+    ['圈复杂度 CC', complexity],
+    ['决策点总数', Math.max(0, complexity - 1)],
+    ['方法 LOC', loc],
+  ]);
+  setStatus('cfg-status', `已自动读取：${className}#${method.methodName}，CC=${complexity}，LOC=${loc}（数据来源 metrics.json）。`);
 }
 
 function countLocFromText(text) {
@@ -495,6 +831,7 @@ function applyMetrics(data, sourceName) {
   }
 
   renderSummary();
+  populateCfgSelectors();
   renderLegend();
   renderRadar();
   renderTable();
@@ -562,8 +899,15 @@ function bindEvents() {
   });
 
   byId('fp-calc').addEventListener('click', calcFunctionPoint);
+  byId('fp-auto').addEventListener('click', autoEstimateFunctionPoint);
+  byId('fp-add-tx').addEventListener('click', addTransactionFunction);
+  byId('fp-add-data').addEventListener('click', addDataFunction);
+  byId('fp-reset').addEventListener('click', resetFunctionPointCounts);
   byId('uc-calc').addEventListener('click', calcUseCasePoint);
+  byId('uc-auto').addEventListener('click', autoEstimateUseCasePoint);
   byId('cfg-calc').addEventListener('click', calcCfgComplexity);
+  byId('cfg-auto').addEventListener('click', calcCfgFromMetrics);
+  byId('cfg-class-select').addEventListener('change', onCfgClassChange);
   byId('loc-calc').addEventListener('click', calcLocFromInput);
   byId('loc-use-project').addEventListener('click', useProjectLoc);
 

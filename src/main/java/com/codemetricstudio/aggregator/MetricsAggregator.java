@@ -31,6 +31,7 @@ public class MetricsAggregator {
         parsedProject.getClasses().forEach(pc -> classMap.put(pc.getQualifiedName(), pc));
 
         Map<String, Integer> nocByClass = buildNocMap(parsedProject.getClasses(), classMap);
+        Set<String> projectMethodNames = buildProjectMethodNameSet(parsedProject.getClasses());
 
         List<ClassMetrics> classMetricsList = new ArrayList<>();
         List<MethodMetrics> methodMetricsList = new ArrayList<>();
@@ -40,11 +41,12 @@ public class MetricsAggregator {
             ClassMetrics classMetrics = new ClassMetrics();
             classMetrics.setPackageName(parsedClass.getPackageName());
             classMetrics.setClassName(parsedClass.getQualifiedName());
-            classMetrics.setWmc(parsedClass.getMethods().stream().mapToInt(ParsedMethod::getComplexity).sum());
+            // Teaching-caliber CK口径: WMC按类中定义的方法个数统计
+            classMetrics.setWmc(parsedClass.getMethods().size());
             classMetrics.setDit(calculateDit(parsedClass, classMap));
             classMetrics.setNoc(nocByClass.getOrDefault(parsedClass.getQualifiedName(), 0));
             classMetrics.setCbo(parsedClass.getCoupledTypes().size());
-            classMetrics.setRfc(calculateRfc(parsedClass));
+            classMetrics.setRfc(calculateRfc(parsedClass, projectMethodNames));
             classMetrics.setLcom(lcomCalculator.calculate(parsedClass));
             classMetricsList.add(classMetrics);
 
@@ -96,13 +98,28 @@ public class MetricsAggregator {
         return metrics;
     }
 
-    private int calculateRfc(ParsedClass parsedClass) {
-        Set<String> responseSet = new HashSet<>();
+    private int calculateRfc(ParsedClass parsedClass, Set<String> projectMethodNames) {
+        Set<String> ownMethodNames = new HashSet<>();
+        parsedClass.getMethods().forEach(method -> ownMethodNames.add(method.getMethodName()));
+
+        Set<String> externalProjectCalls = new HashSet<>();
         parsedClass.getMethods().forEach(method -> {
-            responseSet.add(method.getMethodName());
-            responseSet.addAll(method.getCalledMethods());
+            method.getCalledMethods().stream()
+                    .filter(projectMethodNames::contains)
+                    .filter(called -> !ownMethodNames.contains(called))
+                    .forEach(externalProjectCalls::add);
         });
-        return responseSet.size();
+        return ownMethodNames.size() + externalProjectCalls.size();
+    }
+
+    private Set<String> buildProjectMethodNameSet(List<ParsedClass> classes) {
+        Set<String> names = new HashSet<>();
+        for (ParsedClass parsedClass : classes) {
+            for (ParsedMethod method : parsedClass.getMethods()) {
+                names.add(method.getMethodName());
+            }
+        }
+        return names;
     }
 
     private int calculateDit(ParsedClass parsedClass, Map<String, ParsedClass> classMap) {

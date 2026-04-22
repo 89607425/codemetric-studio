@@ -1,41 +1,102 @@
 # CodeMetric Studio
 
-CodeMetric Studio 是一个面向 Java 项目的自动化代码度量工具，满足课程项目的核心要求：LoC、圈复杂度、CK 指标（WMC/DIT/NOC/CBO/RFC/LCOM）、阈值告警与报告导出。
+CodeMetric Studio 是一个面向 Java 项目的课程级软件度量平台，包含：
 
-## 功能
-- 递归扫描 Java 文件，自动过滤 `target`、`build`、`.git`
-- 计算 LoC（总行/空行/注释行/有效代码行）
-- 计算方法圈复杂度（if/for/while/case/catch/&&/||）
-- 计算 CK 指标：WMC、DIT、NOC、CBO、RFC、LCOM
-- 输出：控制台摘要 + `metrics.json` + `metrics-report.md`
-- 支持模块分析与自定义阈值
+- 后端 CLI：自动扫描 Java 工程，计算 LoC、圈复杂度、CK 指标并输出报告
+- 前端页面：提供功能点、用例点、面向对象、控制流、代码行等可视化与交互式度量
 
-## 环境
+---
+
+## 1. 当前已实现能力
+
+### 后端 CLI（自动化）
+- 递归扫描 Java 文件（自动过滤 `target`、`build`、`.git`）
+- 计算 LoC：总行、空行、注释行、有效代码行
+- 计算方法圈复杂度（`if/for/while/case/catch/&&/||/?`）
+- 计算 CK 指标：`WMC`、`DIT`、`NOC`、`CBO`、`RFC`、`LCOM`
+- 阈值告警（方法复杂度、类 WMC、类 CBO）
+- 输出 `metrics.json` 与 `metrics-report.md`
+
+### 指标口径（已按教学口径调整）
+- `WMC`：按类中定义的方法个数统计
+- `RFC`：本类方法数 + 调用到的项目内其他方法数（去重）
+- `DIT` / `NOC` / `CBO` / `LCOM`：按当前解析模型计算
+
+### 前端页面（交互 + 自动估算）
+- **功能点度量**
+  - 手工录入：事务功能（`FTR/DER`）、数据功能（`RET/DET`）自动判级
+  - 一键自动估算：基于 `metrics.json` 启发式生成 EI/EO/EQ/ILF/EIF 分档计数
+  - 结果：`UFP`、`VAF`、`调整后 FP`
+- **用例图度量**
+  - 支持 `UAW`、`UUC`、`UUCP`
+  - 按公式计算：`TCF = 0.6 + 0.01*TFactor`，`EF = 1.4 - 0.03*EFactor`，`UPC = UUCP*TCF*EF`
+  - 一键自动估算：基于 `metrics.json` 自动生成参与者/用例分档与 `TFactor/EFactor`
+- **面向对象度量**
+  - 读取 `metrics.json` 展示雷达图和类级明细
+  - 支持 XML 导出
+- **控制流图度量**
+  - 手工模式：粘贴代码，近似统计决策点并计算 CC
+  - 自动化A：基于 `metrics.json` 的类/方法下拉，一键读取方法 CC
+- **代码行度量**
+  - 手工模式：粘贴代码统计 LoC
+  - 自动模式：一键读取项目 `metrics.json` 的 LoC
+
+---
+
+## 2. 环境要求
+
 - Java 17+
 - Maven 3.9+
+- Python 3.x（用于本地静态页面服务）
 
-## 运行
+---
+
+## 3. 快速开始
+
+### 3.1 编译项目
 
 ```bash
-cd /Users/houjunyi/Downloads/codemetric-studio
 mvn clean package
-mvn exec:java -Dexec.args="analyze --path /path/to/java-project --out /path/to/output --format all"
 ```
 
-## CLI 参数
-- `--path <project_path>`：待分析项目路径（必填）
+### 3.2 运行 CLI 分析（示例：坏味道 UML 样例）
+
+```bash
+mvn exec:java "-Dexec.args=analyze --path bad-uml-sample --out out/bad-uml-analysis --format all --threshold docs/threshold.sample.json"
+```
+
+若是 PowerShell，推荐保持 `-Dexec.args=...` 整体加双引号。
+
+### 3.3 启动前端页面
+
+```bash
+python -m http.server 8080
+```
+
+浏览器访问：
+
+- `http://localhost:8080/web/`
+
+默认读取：
+
+- `http://localhost:8080/out/metrics.json`
+
+---
+
+## 4. CLI 用法
+
+```bash
+mvn exec:java "-Dexec.args=analyze --path <待分析项目路径> --out <输出目录> --format <json|md|all> [--module <子目录>] [--threshold <阈值JSON>]"
+```
+
+### 参数说明
+- `--path <project_path>`：待分析项目根路径（必填）
 - `--out <output_dir>`：输出目录（默认 `./out`）
 - `--format json|md|all`：输出格式（默认 `all`）
 - `--module <subdir>`：仅分析指定子目录
-- `--threshold <config.json>`：阈值配置文件
+- `--threshold <config.json>`：阈值配置文件路径
 
-示例：
-
-```bash
-mvn exec:java -Dexec.args="analyze --path /Users/houjunyi/Downloads/chunfeng --module src/main/java --out /Users/houjunyi/Downloads/codemetric-out --format all --threshold /Users/houjunyi/Downloads/codemetric-studio/docs/threshold.sample.json"
-```
-
-## 阈值配置示例
+### 阈值配置示例
 
 ```json
 {
@@ -45,47 +106,45 @@ mvn exec:java -Dexec.args="analyze --path /Users/houjunyi/Downloads/chunfeng --m
 }
 ```
 
-## 输出文件
-- `metrics.json`：完整机器可读结果
-- `metrics-report.md`：实验报告可直接粘贴的 Markdown 报告
+---
 
-## 本地前端可视化
-1. 先生成分析结果到项目内 `out` 目录：
+## 5. 结果文件说明
+
+- `metrics.json`：完整机器可读度量结果（前端可直接加载）
+- `metrics-report.md`：报告型输出（便于实验文档粘贴）
+
+---
+
+## 6. 内置样例
+
+- `sample-java-project`：基础样例（小规模）
+- `bad-uml-sample`：按 UML 结构构造的复杂样例（更适合展示风险与多指标）
+
+示例（输出到前端默认路径）：
 
 ```bash
-mvn exec:java -Dexec.args="analyze --path /Users/houjunyi/Downloads/chunfeng --out /Users/houjunyi/Downloads/codemetric-studio/out --format all"
+mvn exec:java "-Dexec.args=analyze --path bad-uml-sample --out out --format all --threshold docs/threshold.sample.json"
 ```
 
-2. 在项目根目录启动静态服务：
+---
 
-```bash
-cd /Users/houjunyi/Downloads/codemetric-studio
-python3 -m http.server 8080
-```
+## 7. 常见问题
 
-3. 浏览器打开：
-- `http://localhost:8080/web/`
+- 页面空白或无数据：确认通过 `python -m http.server 8080` 从项目根目录启动，并检查 `out/metrics.json` 是否存在。
+- 控制流“自动读取”下拉为空：先加载/上传 `metrics.json`，再切换到控制流页签。
+- 功能点/用例点自动估算结果偏差：当前为启发式自动估算，最终请按业务事实人工复核。
 
-页面默认读取 `http://localhost:8080/out/metrics.json`。
+---
 
-### 页面模块说明（对应课程实验步骤）
-- `功能点度量`：支持 EI/EO/EQ/ILF/EIF + VAF，输出 UFP 与调整后 FP。
-- `用例图度量`：支持参与者复杂度、用例复杂度、TCF、ECF，输出 UAW/UUCW/UUCP/UCP。
-- `面向对象度量`：读取 `metrics.json` 中 CK 相关数据，展示雷达图与类级明细表，支持 XML 导出。
-- `控制流图度量`：对输入代码片段统计决策点并计算圈复杂度（近似法）。
-- `代码行度量`：支持输入代码文本统计 LoC，也可直接读取项目分析结果中的 LoC。
-
-说明：
-- 当前后端 CLI 主要针对 Java 源码进行自动化解析与 CK/LoC/复杂度计算。
-- 前端中的 `功能点/用例图/控制流图` 支持按课程模型进行交互式计算，便于实验演示与报告截图。
-
-## 项目结构
+## 8. 项目结构
 
 ```text
 codemetric-studio/
   pom.xml
   README.md
   web/
+    index.html
+    main.js
   src/main/java/com/codemetricstudio/
     cli/
     scanner/
@@ -99,5 +158,8 @@ codemetric-studio/
   src/test/java/com/codemetricstudio/
   docs/
     PRD.md
+    requirements-traceability.md
     threshold.sample.json
+  sample-java-project/
+  bad-uml-sample/
 ```

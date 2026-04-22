@@ -148,7 +148,7 @@
       color: #5e6677;
     }
 
-    input[type="number"], textarea {
+    input[type="number"], select, textarea {
       width: 100%;
       border: 1px solid #d8dfec;
       border-radius: 5px;
@@ -385,15 +385,41 @@
           <div id="tab-fp" class="tab-pane hidden">
             <div class="panel-body">
               <div class="grid-3">
-                <label class="field">EI 数量<input id="fp-ei" type="number" min="0" value="0" /></label>
-                <label class="field">EO 数量<input id="fp-eo" type="number" min="0" value="0" /></label>
-                <label class="field">EQ 数量<input id="fp-eq" type="number" min="0" value="0" /></label>
-                <label class="field">ILF 数量<input id="fp-ilf" type="number" min="0" value="0" /></label>
-                <label class="field">EIF 数量<input id="fp-eif" type="number" min="0" value="0" /></label>
+                <label class="field">事务类型
+                  <select id="fp-tx-type">
+                    <option value="EI">EI</option>
+                    <option value="EO">EO</option>
+                    <option value="EQ">EQ</option>
+                  </select>
+                </label>
+                <label class="field">事务 FTR<input id="fp-tx-ftr" type="number" min="0" value="0" /></label>
+                <label class="field">事务 DER<input id="fp-tx-der" type="number" min="0" value="0" /></label>
+              </div>
+              <div class="row">
+                <button class="btn secondary" id="fp-add-tx">添加事务功能</button>
+              </div>
+
+              <div class="grid-3" style="margin-top:10px;">
+                <label class="field">数据类型
+                  <select id="fp-data-type">
+                    <option value="ILF">ILF</option>
+                    <option value="EIF">EIF</option>
+                  </select>
+                </label>
+                <label class="field">数据 RET<input id="fp-data-ret" type="number" min="0" value="0" /></label>
+                <label class="field">数据 DET<input id="fp-data-det" type="number" min="0" value="0" /></label>
+              </div>
+              <div class="row">
+                <button class="btn secondary" id="fp-add-data">添加数据功能</button>
+              </div>
+
+              <div class="grid-3" style="margin-top:10px;">
                 <label class="field">VAF(0.65~1.35)<input id="fp-vaf" type="number" step="0.01" min="0.65" max="1.35" value="1.00" /></label>
               </div>
               <div class="row">
                 <button class="btn primary" id="fp-calc">计算功能点</button>
+                <button class="btn secondary" id="fp-auto">自动估算(基于metrics)</button>
+                <button class="btn secondary" id="fp-reset">重置统计</button>
               </div>
               <div class="cards" id="fp-cards"></div>
               <div class="status" id="fp-status"></div>
@@ -409,11 +435,12 @@
                 <label class="field">简单用例<input id="uc-us" type="number" min="0" value="0" /></label>
                 <label class="field">一般用例<input id="uc-ua" type="number" min="0" value="0" /></label>
                 <label class="field">复杂用例<input id="uc-uc" type="number" min="0" value="0" /></label>
-                <label class="field">TCF<input id="uc-tcf" type="number" step="0.01" min="0" value="1.00" /></label>
-                <label class="field">ECF<input id="uc-ecf" type="number" step="0.01" min="0" value="1.00" /></label>
+                <label class="field">TFactor<input id="uc-tfactor" type="number" step="1" min="0" max="50" value="0" /></label>
+                <label class="field">EFactor<input id="uc-efactor" type="number" step="1" min="0" max="50" value="0" /></label>
               </div>
               <div class="row">
                 <button class="btn primary" id="uc-calc">计算用例点</button>
+                <button class="btn secondary" id="uc-auto">自动估算(基于metrics)</button>
               </div>
               <div class="cards" id="uc-cards"></div>
               <div class="status" id="uc-status"></div>
@@ -422,6 +449,21 @@
 
           <div id="tab-cfg" class="tab-pane hidden">
             <div class="panel-body">
+              <div class="grid-3">
+                <label class="field">类
+                  <select id="cfg-class-select">
+                    <option value="">请选择类</option>
+                  </select>
+                </label>
+                <label class="field">方法
+                  <select id="cfg-method-select">
+                    <option value="">请选择方法</option>
+                  </select>
+                </label>
+              </div>
+              <div class="row">
+                <button class="btn secondary" id="cfg-auto">按已分析方法自动读取</button>
+              </div>
               <label class="field">粘贴方法代码（Java/伪代码）
                 <textarea id="cfg-code" placeholder="例如: if/for/while/case/catch/&&/|| ..."></textarea>
               </label>
