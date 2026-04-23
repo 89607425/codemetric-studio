@@ -24,6 +24,33 @@ const TAB_TITLE = {
   loc: '代码行度量',
 };
 
+const TAB_DESC = {
+  fp: '功能点度量用于估算软件功能规模，基于事务功能与数据功能分档计算 UFP 与调整后 FP。',
+  uc: '用例图度量通过参与者与用例复杂度计算 UUCP，并结合技术与环境因子得到 UPC。',
+  oo: '面向对象度量展示类级 CK 相关指标与风险排序，支持雷达图与明细表联动分析。',
+  cfg: '控制流图度量用于评估方法逻辑复杂度，可手工统计或直接读取已分析方法的圈复杂度。',
+  loc: '代码行度量统计总行、空行、注释行与有效代码行，用于快速评估代码体量与可维护性。',
+};
+
+const TAB_BADGES = {
+  fp: ['FTR/DER 自动判级', 'RET/DET 自动判级', '基于 metrics 自动估算'],
+  uc: ['UAW/UUC/UUCP 计算', 'TCF/EF 公式修正', '基于 metrics 自动估算'],
+  oo: ['可视化雷达图', '类级明细表', 'XML 导出'],
+  cfg: ['代码决策点统计', '方法 CC 自动读取', '决策点明细展示'],
+  loc: ['总行数统计', '注释/空行分解', '项目 LoC 一键读取'],
+};
+
+function renderHeroBadges(tabKey) {
+  const badges = TAB_BADGES[tabKey] || ['可视化度量', '结果展示', '自动分析'];
+  const ids = ['heroBadge1', 'heroBadge2', 'heroBadge3'];
+  ids.forEach((id, idx) => {
+    const el = byId(id);
+    if (el) {
+      el.textContent = badges[idx] || '';
+    }
+  });
+}
+
 function byId(id) {
   return document.getElementById(id);
 }
@@ -60,6 +87,11 @@ function renderCards(hostId, entries) {
 function switchTab(tabKey) {
   state.activeTab = tabKey;
   byId('sectionTitle').textContent = TAB_TITLE[tabKey] || '度量';
+  const descEl = byId('sectionDesc');
+  if (descEl) {
+    descEl.textContent = TAB_DESC[tabKey] || '支持功能点、用例点、OO 指标、控制流复杂度、LoC 五类度量，数据来源可切换默认输出或本地上传文件。';
+  }
+  renderHeroBadges(tabKey);
 
   document.querySelectorAll('.tab-pane').forEach((el) => el.classList.add('hidden'));
   const activePane = byId(`tab-${tabKey}`);
@@ -215,8 +247,8 @@ function renderRadar() {
 
     const poly = document.createElementNS(svgNS, 'polygon');
     poly.setAttribute('points', pts.map((p) => `${p.x},${p.y}`).join(' '));
-    poly.setAttribute('fill', level % 2 === 0 ? '#f7f9ff' : '#fbfdff');
-    poly.setAttribute('stroke', '#dce3ef');
+    poly.setAttribute('fill', level % 2 === 0 ? 'rgba(30, 56, 90, 0.25)' : 'rgba(19, 38, 65, 0.2)');
+    poly.setAttribute('stroke', '#2f5a89');
     poly.setAttribute('stroke-width', '1');
     svg.appendChild(poly);
   }
@@ -229,7 +261,7 @@ function renderRadar() {
     axisLine.setAttribute('y1', String(cy));
     axisLine.setAttribute('x2', String(p.x));
     axisLine.setAttribute('y2', String(p.y));
-    axisLine.setAttribute('stroke', '#d5ddeb');
+    axisLine.setAttribute('stroke', '#3a6799');
     axisLine.setAttribute('stroke-width', '1');
     svg.appendChild(axisLine);
 
@@ -239,7 +271,7 @@ function renderRadar() {
     text.setAttribute('y', String(lp.y));
     text.setAttribute('text-anchor', 'middle');
     text.setAttribute('font-size', '24');
-    text.setAttribute('fill', '#2f3642');
+    text.setAttribute('fill', '#cae3ff');
     text.textContent = axis;
     svg.appendChild(text);
   });
@@ -939,7 +971,7 @@ async function init() {
     renderTable();
   }
 
-  switchTab('oo');
+  switchTab('fp');
 }
 
 init();
