@@ -79,6 +79,42 @@ public class ExtendedMetrics {
      */
     private int noc;
 
+    /**
+     * COA (Cohesion Among Methods) - 类内方法内聚性
+     * 基于方法对共享字段的访问计算内聚性
+     * COA = P / (M * (P + 1) / 2)，其中 P=共享字段的方法对数，M=方法数
+     * 特点：衡量类内方法的内聚程度，高值表明良好的单一职责设计
+     */
+    private double coa;
+
+    /**
+     * Size1 (Class Size) - 类大小（成员变量数）
+     * 类的实例变量（字段）数量
+     * 特点：反映类的数据组织复杂度
+     */
+    private int size1;
+
+    /**
+     * MPC (Methods per Class) - 类的方法总数
+     * 类中定义的所有方法数量（含继承来的方法需额外计算）
+     * 特点：衡量类的功能规模
+     */
+    private int mpc;
+
+    /**
+     * AIF (Attribute Inheritance Factor) - 属性继承因子
+     * AIF = 继承的属性数 / 总属性数
+     * 特点：衡量属性通过继承获得的比例
+     */
+    private double aif;
+
+    /**
+     * MIF (Method Inheritance Factor) - 方法继承因子
+     * MIF = 继承的方法数 / 总方法数
+     * 特点：衡量方法通过继承获得的比例
+     */
+    private double mif;
+
     public ExtendedMetrics() {
     }
 
@@ -160,5 +196,45 @@ public class ExtendedMetrics {
 
     public void setNoc(int noc) {
         this.noc = noc;
+    }
+
+    public double getCoa() {
+        return coa;
+    }
+
+    public void setCoa(double coa) {
+        this.coa = coa;
+    }
+
+    public int getSize1() {
+        return size1;
+    }
+
+    public void setSize1(int size1) {
+        this.size1 = size1;
+    }
+
+    public int getMpc() {
+        return mpc;
+    }
+
+    public void setMpc(int mpc) {
+        this.mpc = mpc;
+    }
+
+    public double getAif() {
+        return aif;
+    }
+
+    public void setAif(double aif) {
+        this.aif = aif;
+    }
+
+    public double getMif() {
+        return mif;
+    }
+
+    public void setMif(double mif) {
+        this.mif = mif;
     }
 }

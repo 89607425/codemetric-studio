@@ -158,6 +158,12 @@ function deriveRows(metrics) {
     const cam = Number(c.cam || 0);
     const cis = Number(c.cis || 0);
     const nsc = Number(c.nsc || 0);
+    // 新增指标
+    const coa = Number(c.coa || 0);
+    const size1 = Number(c.size1 || 0);
+    const mpc = Number(c.mpc || 0);
+    const aif = Number(c.aif || 0);
+    const mif = Number(c.mif || 0);
     // 风险评分
     const risk = cbo * 2 + wmc + noc * 3 + dit + rfc;
 
@@ -165,6 +171,7 @@ function deriveRows(metrics) {
       name, wmc, dit, noc, cbo, rfc, lcom,
       nop, nom, noo, pod, overrideRatio, overloadRatio,
       sk, dac, moa, mfa, cam, cis, nsc,
+      coa, size1, mpc, aif, mif,
       risk
     };
   });
@@ -184,6 +191,7 @@ function renderSummary() {
     '【CK指标】WMC/DIT/NOC/CBO/RFC/LCOM',
     '【多态指标】NOP/NOM/NOO/POD',
     '【扩展指标】SK/DAC/MOA/MFA/CAM/CIS/NSC',
+    '【新增指标】COA/Size1/MPC/AIF/MIF',
   ].map((x) => `<div>${x}</div>`).join('');
 }
 
@@ -363,6 +371,11 @@ function renderTable() {
       <td>${r.dac}</td>
       <td>${r.cis}</td>
       <td>${r.nsc}</td>
+      <td>${r.coa.toFixed(2)}</td>
+      <td>${r.size1}</td>
+      <td>${r.mpc}</td>
+      <td>${r.aif.toFixed(2)}</td>
+      <td>${r.mif.toFixed(2)}</td>
     </tr>`;
   }).join('');
 
@@ -390,6 +403,11 @@ function renderTable() {
           <th>DAC<br>(数据抽象耦合)</th>
           <th>CIS<br>(类接口大小)</th>
           <th>NSC<br>(静态方法数)</th>
+          <th>COA<br>(内聚性)</th>
+          <th>Size1<br>(成员变量数)</th>
+          <th>MPC<br>(方法总数)</th>
+          <th>AIF<br>(属性继承因子)</th>
+          <th>MIF<br>(方法继承因子)</th>
         </tr>
       </thead>
       <tbody>${body}</tbody>
@@ -902,6 +920,11 @@ function toXml(rows) {
     lines.push(`    <CAM>${r.cam.toFixed(2)}</CAM>`);
     lines.push(`    <CIS>${r.cis}</CIS>`);
     lines.push(`    <NSC>${r.nsc}</NSC>`);
+    lines.push(`    <COA>${r.coa.toFixed(2)}</COA>`);
+    lines.push(`    <Size1>${r.size1}</Size1>`);
+    lines.push(`    <MPC>${r.mpc}</MPC>`);
+    lines.push(`    <AIF>${r.aif.toFixed(2)}</AIF>`);
+    lines.push(`    <MIF>${r.mif.toFixed(2)}</MIF>`);
     lines.push('  </class>');
   }
   lines.push('</classMetrics>');

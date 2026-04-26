@@ -71,6 +71,7 @@ public class MetricsAggregator {
                     parsedClass,
                     classMetrics.getDit(),
                     classMetrics.getNoc(),
+                    parentClass,
                     parsedProject.getClasses()
             );
             classMetrics.setSk(extMetrics.getSk());
@@ -80,6 +81,11 @@ public class MetricsAggregator {
             classMetrics.setCam(extMetrics.getCam());
             classMetrics.setCis(extMetrics.getCis());
             classMetrics.setNsc(extMetrics.getNsc());
+            classMetrics.setCoa(extMetrics.getCoa());
+            classMetrics.setSize1(extMetrics.getSize1());
+            classMetrics.setMpc(extMetrics.getMpc());
+            classMetrics.setAif(extMetrics.getAif());
+            classMetrics.setMif(extMetrics.getMif());
 
             classMetricsList.add(classMetrics);
 
