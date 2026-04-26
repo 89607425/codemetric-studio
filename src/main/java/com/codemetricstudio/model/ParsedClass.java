@@ -11,9 +11,19 @@ public class ParsedClass {
     private String qualifiedName;
     private String superClass;
     private boolean isInterface;
+
+    // 字段信息
     private Set<String> fieldNames = new HashSet<>();
+    private Set<String> fieldTypes = new HashSet<>();  // 字段的类型（用于MOA计算）
+
+    // 耦合信息
     private Set<String> coupledTypes = new HashSet<>();
+
+    // 方法列表
     private List<ParsedMethod> methods = new ArrayList<>();
+
+    // 注解数量（用于多态度量）
+    private int annotationCount = 0;
 
     public String getPackageName() {
         return packageName;
@@ -63,6 +73,14 @@ public class ParsedClass {
         this.fieldNames = fieldNames;
     }
 
+    public Set<String> getFieldTypes() {
+        return fieldTypes;
+    }
+
+    public void setFieldTypes(Set<String> fieldTypes) {
+        this.fieldTypes = fieldTypes;
+    }
+
     public Set<String> getCoupledTypes() {
         return coupledTypes;
     }
@@ -77,5 +95,13 @@ public class ParsedClass {
 
     public void setMethods(List<ParsedMethod> methods) {
         this.methods = methods;
+    }
+
+    public int getAnnotationCount() {
+        return annotationCount;
+    }
+
+    public void setAnnotationCount(int annotationCount) {
+        this.annotationCount = annotationCount;
     }
 }

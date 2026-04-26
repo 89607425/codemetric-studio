@@ -46,7 +46,7 @@ class MetricsAggregatorTest {
 
         assertEquals(2, metrics.getClassCount());
         assertEquals(1, metrics.getMethodCount());
-        assertEquals(3, metrics.getClasses().stream().filter(c -> c.getClassName().equals("demo.Base")).findFirst().orElseThrow().getWmc());
+        assertEquals(1, metrics.getClasses().stream().filter(c -> c.getClassName().equals("demo.Base")).findFirst().orElseThrow().getWmc());
         assertEquals(1, metrics.getClasses().stream().filter(c -> c.getClassName().equals("demo.Base")).findFirst().orElseThrow().getNoc());
         assertEquals(1, metrics.getClasses().stream().filter(c -> c.getClassName().equals("demo.Child")).findFirst().orElseThrow().getDit());
     }

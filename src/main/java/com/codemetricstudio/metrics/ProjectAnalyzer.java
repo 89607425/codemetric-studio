@@ -32,6 +32,10 @@ public class ProjectAnalyzer {
             classes.addAll(parser.parseFile(file));
         }
 
+        // 两阶段处理：解析完所有文件后，检测重写方法
+        // 这样可以确保父类已经被解析，能正确识别重写
+        parser.detectOverriddenMethods(classes);
+
         project.setLoc(projectLoc);
         project.setClasses(classes);
         return project;

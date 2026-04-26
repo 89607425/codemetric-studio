@@ -1,13 +1,16 @@
 package com.codemetricstudio.aggregator;
 
 import com.codemetricstudio.config.ThresholdConfig;
+import com.codemetricstudio.metrics.ExtendedMetricsCalculator;
 import com.codemetricstudio.metrics.LcomCalculator;
+import com.codemetricstudio.metrics.PolymorphismCalculator;
 import com.codemetricstudio.model.Alert;
 import com.codemetricstudio.model.ClassMetrics;
 import com.codemetricstudio.model.MethodMetrics;
 import com.codemetricstudio.model.ParsedClass;
 import com.codemetricstudio.model.ParsedMethod;
 import com.codemetricstudio.model.ParsedProject;
+import com.codemetricstudio.model.PolymorphismMetrics;
 import com.codemetricstudio.model.ProjectMetrics;
 
 import java.util.ArrayList;
@@ -20,6 +23,8 @@ import java.util.Set;
 public class MetricsAggregator {
 
     private final LcomCalculator lcomCalculator = new LcomCalculator();
+    private final PolymorphismCalculator polymorphismCalculator = new PolymorphismCalculator();
+    private final ExtendedMetricsCalculator extendedMetricsCalculator = new ExtendedMetricsCalculator();
 
     public ProjectMetrics aggregate(ParsedProject parsedProject, ThresholdConfig thresholdConfig) {
         ProjectMetrics metrics = new ProjectMetrics();
@@ -41,6 +46,8 @@ public class MetricsAggregator {
             ClassMetrics classMetrics = new ClassMetrics();
             classMetrics.setPackageName(parsedClass.getPackageName());
             classMetrics.setClassName(parsedClass.getQualifiedName());
+
+            // ===== CK 核心度量 =====
             // Teaching-caliber CK口径: WMC按类中定义的方法个数统计
             classMetrics.setWmc(parsedClass.getMethods().size());
             classMetrics.setDit(calculateDit(parsedClass, classMap));
@@ -48,8 +55,35 @@ public class MetricsAggregator {
             classMetrics.setCbo(parsedClass.getCoupledTypes().size());
             classMetrics.setRfc(calculateRfc(parsedClass, projectMethodNames));
             classMetrics.setLcom(lcomCalculator.calculate(parsedClass));
+
+            // ===== 多态性度量 =====
+            ParsedClass parentClass = findBySimpleOrQualifiedName(parsedClass.getSuperClass(), classMap);
+            PolymorphismMetrics polyMetrics = polymorphismCalculator.calculate(parsedClass, parentClass);
+            classMetrics.setNop(polyMetrics.getNop());
+            classMetrics.setNom(polyMetrics.getNom());
+            classMetrics.setNoo(polyMetrics.getNoo());
+            classMetrics.setPod(polyMetrics.getPod());
+            classMetrics.setOverrideRatio(polyMetrics.getOverrideRatio());
+            classMetrics.setOverloadRatio(polyMetrics.getOverloadRatio());
+
+            // ===== 扩展度量 =====
+            var extMetrics = extendedMetricsCalculator.calculate(
+                    parsedClass,
+                    classMetrics.getDit(),
+                    classMetrics.getNoc(),
+                    parsedProject.getClasses()
+            );
+            classMetrics.setSk(extMetrics.getSk());
+            classMetrics.setDac(extMetrics.getDac());
+            classMetrics.setMoa(extMetrics.getMoa());
+            classMetrics.setMfa(extMetrics.getMfa());
+            classMetrics.setCam(extMetrics.getCam());
+            classMetrics.setCis(extMetrics.getCis());
+            classMetrics.setNsc(extMetrics.getNsc());
+
             classMetricsList.add(classMetrics);
 
+            // 告警检查
             if (classMetrics.getWmc() > thresholdConfig.getClassWmc()) {
                 alerts.add(new Alert(
                         "WMC",
@@ -66,6 +100,17 @@ public class MetricsAggregator {
                         classMetrics.getCbo(),
                         thresholdConfig.getClassCbo(),
                         "Reduce direct dependencies and introduce interfaces/facades."
+                ));
+            }
+
+            // 多态性告警
+            if (classMetrics.getPod() > 0.9) {
+                alerts.add(new Alert(
+                        "HIGH_POLYMORPHISM",
+                        parsedClass.getQualifiedName(),
+                        (int)(classMetrics.getPod() * 100),
+                        90,
+                        "Very high polymorphism degree. Ensure proper override contracts are maintained."
                 ));
             }
 
@@ -153,6 +198,9 @@ public class MetricsAggregator {
     }
 
     private ParsedClass findBySimpleOrQualifiedName(String name, Map<String, ParsedClass> classMap) {
+        if (name == null || name.isBlank()) {
+            return null;
+        }
         ParsedClass byQualified = classMap.get(name);
         if (byQualified != null) {
             return byQualified;

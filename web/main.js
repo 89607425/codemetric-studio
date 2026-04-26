@@ -14,7 +14,7 @@ const state = {
   },
 };
 
-const METRIC_AXES = ['CBO', 'NOO', 'NOC', 'NOA', 'DIT', 'CS'];
+const METRIC_AXES = ['WMC', 'DIT', 'NOC', 'CBO', 'RFC', 'LCOM'];
 const COLORS = ['#5470C6', '#91CC75', '#FAC858', '#EE6666', '#73C0DE', '#3BA272', '#FC8452', '#9A60B4', '#EA7CCC', '#5E78D5', '#8BC34A', '#D96F65'];
 const TAB_TITLE = {
   fp: '功能点度量',
@@ -136,15 +136,37 @@ function deriveRows(metrics) {
 
   return classes.map((c) => {
     const name = c.className || '-';
-    const cbo = Number(c.cbo || 0);
-    const noo = 0;
-    const noa = Number(methodsByClass.get(name) || 0);
-    const noc = Number(c.noc || 0);
+    // CK 核心指标
+    const wmc = Number(c.wmc || 0);
     const dit = Number(c.dit || 0);
-    const cs = Number(c.wmc || 0);
-    const risk = cbo * 2 + cs + noc * 3 + dit;
+    const noc = Number(c.noc || 0);
+    const cbo = Number(c.cbo || 0);
+    const rfc = Number(c.rfc || 0);
+    const lcom = Number(c.lcom || 0);
+    // 多态性指标
+    const nop = Number(c.nop || 0);
+    const nom = Number(c.nom || 0);
+    const noo = Number(c.noo || 0);
+    const pod = Number(c.pod || 0);
+    const overrideRatio = Number(c.overrideRatio || 0);
+    const overloadRatio = Number(c.overloadRatio || 0);
+    // 扩展指标
+    const sk = Number(c.sk || 0);
+    const dac = Number(c.dac || 0);
+    const moa = Number(c.moa || 0);
+    const mfa = Number(c.mfa || 0);
+    const cam = Number(c.cam || 0);
+    const cis = Number(c.cis || 0);
+    const nsc = Number(c.nsc || 0);
+    // 风险评分
+    const risk = cbo * 2 + wmc + noc * 3 + dit + rfc;
 
-    return { name, cbo, noo, noa, noc, dit, cs, risk };
+    return {
+      name, wmc, dit, noc, cbo, rfc, lcom,
+      nop, nom, noo, pod, overrideRatio, overloadRatio,
+      sk, dac, moa, mfa, cam, cis, nsc,
+      risk
+    };
   });
 }
 
@@ -159,7 +181,9 @@ function renderSummary() {
     `总行数：${Number(loc.totalLines || 0)}，有效代码行：${Number(loc.codeLines || 0)}`,
     `告警数量：${alerts}`,
     `数据源：${escapeHtml(state.sourceName)}`,
-    '映射说明：CS 使用 WMC；NOA 使用类内方法数；NOO 在当前数据模型中缺失，暂记 0。',
+    '【CK指标】WMC/DIT/NOC/CBO/RFC/LCOM',
+    '【多态指标】NOP/NOM/NOO/POD',
+    '【扩展指标】SK/DAC/MOA/MFA/CAM/CIS/NSC',
   ].map((x) => `<div>${x}</div>`).join('');
 }
 
@@ -169,12 +193,12 @@ function getTopRows(limit = 12) {
 
 function valueForAxis(row, axis) {
   switch (axis) {
-    case 'CBO': return row.cbo;
-    case 'NOO': return row.noo;
-    case 'NOC': return row.noc;
-    case 'NOA': return row.noa;
+    case 'WMC': return row.wmc;
     case 'DIT': return row.dit;
-    case 'CS': return row.cs;
+    case 'NOC': return row.noc;
+    case 'CBO': return row.cbo;
+    case 'RFC': return row.rfc;
+    case 'LCOM': return row.lcom;
     default: return 0;
   }
 }
@@ -320,12 +344,25 @@ function renderTable() {
     const active = state.selectedClass === r.name ? 'row-active' : '';
     return `<tr class="${active}">
       <td><a class="class-link" data-class="${escapeHtml(r.name)}">${escapeHtml(r.name)}</a></td>
-      <td>${r.cbo}</td>
-      <td>${r.cs}</td>
-      <td>${r.noo}</td>
-      <td>${r.noa}</td>
-      <td>${r.noc}</td>
+      <td>${r.wmc}</td>
       <td>${r.dit}</td>
+      <td>${r.noc}</td>
+      <td>${r.cbo}</td>
+      <td>${r.rfc}</td>
+      <td>${r.lcom.toFixed(2)}</td>
+      <td>${r.nop}</td>
+      <td>${r.nom}</td>
+      <td>${r.noo}</td>
+      <td>${r.pod.toFixed(2)}</td>
+      <td>${r.overrideRatio.toFixed(2)}</td>
+      <td>${r.overloadRatio.toFixed(2)}</td>
+      <td>${r.sk.toFixed(2)}</td>
+      <td>${r.moa}</td>
+      <td>${r.mfa.toFixed(2)}</td>
+      <td>${r.cam.toFixed(2)}</td>
+      <td>${r.dac}</td>
+      <td>${r.cis}</td>
+      <td>${r.nsc}</td>
     </tr>`;
   }).join('');
 
@@ -334,12 +371,25 @@ function renderTable() {
       <thead>
         <tr>
           <th>类名</th>
-          <th>对象间的耦合度<br>CBO</th>
-          <th>类规模度量<br>CS</th>
-          <th>方法重写数<br>NOO</th>
-          <th>增加方法数目<br>NOA</th>
-          <th>子类数目<br>NOC</th>
-          <th>继承树深度<br>DIT</th>
+          <th>WMC<br>(加权方法)</th>
+          <th>DIT<br>(继承深度)</th>
+          <th>NOC<br>(子类数)</th>
+          <th>CBO<br>(耦合度)</th>
+          <th>RFC<br>(响应集)</th>
+          <th>LCOM<br>(内聚度)</th>
+          <th>NOP<br>(多态方法)</th>
+          <th>NOM<br>(重写数)</th>
+          <th>NOO<br>(重载数)</th>
+          <th>POD<br>(多态度)</th>
+          <th>OverrideRatio<br>(重写率)</th>
+          <th>OverloadRatio<br>(重载率)</th>
+          <th>SK<br>(特化指数)</th>
+          <th>MOA<br>(聚合度)</th>
+          <th>MFA<br>(功能抽象)</th>
+          <th>CAM<br>(计算抽象)</th>
+          <th>DAC<br>(数据抽象耦合)</th>
+          <th>CIS<br>(类接口大小)</th>
+          <th>NSC<br>(静态方法数)</th>
         </tr>
       </thead>
       <tbody>${body}</tbody>
@@ -829,13 +879,29 @@ function useProjectLoc() {
 function toXml(rows) {
   const lines = ['<?xml version="1.0" encoding="UTF-8"?>', '<classMetrics>'];
   for (const r of rows) {
-    lines.push(`  <class name="${r.name}">`);
-    lines.push(`    <CBO>${r.cbo}</CBO>`);
-    lines.push(`    <CS>${r.cs}</CS>`);
-    lines.push(`    <NOO>${r.noo}</NOO>`);
-    lines.push(`    <NOA>${r.noa}</NOA>`);
-    lines.push(`    <NOC>${r.noc}</NOC>`);
+    lines.push(`  <class name="${escapeHtml(r.name)}">`);
+    // CK 核心指标
+    lines.push(`    <WMC>${r.wmc}</WMC>`);
     lines.push(`    <DIT>${r.dit}</DIT>`);
+    lines.push(`    <NOC>${r.noc}</NOC>`);
+    lines.push(`    <CBO>${r.cbo}</CBO>`);
+    lines.push(`    <RFC>${r.rfc}</RFC>`);
+    lines.push(`    <LCOM>${r.lcom.toFixed(2)}</LCOM>`);
+    // 多态性指标
+    lines.push(`    <NOP>${r.nop}</NOP>`);
+    lines.push(`    <NOM>${r.nom}</NOM>`);
+    lines.push(`    <NOO>${r.noo}</NOO>`);
+    lines.push(`    <POD>${r.pod.toFixed(2)}</POD>`);
+    lines.push(`    <OverrideRatio>${r.overrideRatio.toFixed(2)}</OverrideRatio>`);
+    lines.push(`    <OverloadRatio>${r.overloadRatio.toFixed(2)}</OverloadRatio>`);
+    // 扩展指标
+    lines.push(`    <SK>${r.sk.toFixed(2)}</SK>`);
+    lines.push(`    <DAC>${r.dac}</DAC>`);
+    lines.push(`    <MOA>${r.moa}</MOA>`);
+    lines.push(`    <MFA>${r.mfa.toFixed(2)}</MFA>`);
+    lines.push(`    <CAM>${r.cam.toFixed(2)}</CAM>`);
+    lines.push(`    <CIS>${r.cis}</CIS>`);
+    lines.push(`    <NSC>${r.nsc}</NSC>`);
     lines.push('  </class>');
   }
   lines.push('</classMetrics>');
