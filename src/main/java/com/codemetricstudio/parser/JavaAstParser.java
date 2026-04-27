@@ -42,14 +42,17 @@ public class JavaAstParser {
     public List<ParsedClass> parseFile(Path file) {
         try {
             CompilationUnit cu = StaticJavaParser.parse(Files.readString(file));
-            String pkg = cu.getPackageDeclaration().map(pd -> pd.getName().asString()).orElse("");
-
-            List<ParsedClass> classes = new ArrayList<>();
-            for (ClassOrInterfaceDeclaration declaration : cu.findAll(ClassOrInterfaceDeclaration.class)) {
-                classes.add(parseClass(pkg, declaration));
-            }
-            return classes;
+            return parseCompilationUnit(cu);
         } catch (IOException | RuntimeException ex) {
+            return List.of();
+        }
+    }
+
+    public List<ParsedClass> parseSource(String source) {
+        try {
+            CompilationUnit cu = StaticJavaParser.parse(source);
+            return parseCompilationUnit(cu);
+        } catch (RuntimeException ex) {
             return List.of();
         }
     }
@@ -167,6 +170,15 @@ public class JavaAstParser {
         parsedClass.getCoupledTypes().remove(parsedClass.getQualifiedName());
         parsedClass.getCoupledTypes().removeIf(this::isPrimitiveOrTrivialType);
         return parsedClass;
+    }
+
+    private List<ParsedClass> parseCompilationUnit(CompilationUnit cu) {
+        String pkg = cu.getPackageDeclaration().map(pd -> pd.getName().asString()).orElse("");
+        List<ParsedClass> classes = new ArrayList<>();
+        for (ClassOrInterfaceDeclaration declaration : cu.findAll(ClassOrInterfaceDeclaration.class)) {
+            classes.add(parseClass(pkg, declaration));
+        }
+        return classes;
     }
 
     /**
