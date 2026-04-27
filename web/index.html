@@ -905,6 +905,568 @@
         min-height: 460px;
       }
     }
+
+    /* MetricsPro light dashboard restyle */
+    :root {
+      --bg: #f5f8fc;
+      --bg-deep: #eef3f9;
+      --panel: #ffffff;
+      --panel-2: #ffffff;
+      --line: #d8e1ee;
+      --text: #080d1b;
+      --muted: #5c6d85;
+      --brand: #0b43c7;
+      --brand-2: #123fbd;
+      --accent: #d97706;
+      --ok: #13a86b;
+      --danger: #c60000;
+      --shadow-soft: 0 1px 2px rgba(15, 23, 42, 0.06);
+      --shadow-mid: 0 1px 2px rgba(15, 23, 42, 0.08);
+      --radius-xl: 8px;
+      --radius-lg: 8px;
+      --radius-sm: 6px;
+    }
+
+    body {
+      color: var(--text);
+      background: var(--bg);
+      font-family: Inter, "Source Han Sans SC", "Noto Sans SC", "Microsoft YaHei", Arial, sans-serif;
+      letter-spacing: 0;
+    }
+
+    .topbar {
+      min-height: 74px;
+      background: #ffffff;
+      border-bottom: 1px solid var(--line);
+      box-shadow: none;
+      color: var(--text);
+      padding: 16px 28px;
+    }
+
+    .topbar::after {
+      display: none;
+    }
+
+    .brand {
+      width: 38px;
+      height: 38px;
+      border-radius: 4px;
+      background: var(--brand);
+      box-shadow: none;
+    }
+
+    .logo-mark {
+      width: 24px;
+      height: 24px;
+    }
+
+    .brand-title {
+      font-size: 24px;
+      letter-spacing: 0;
+      font-weight: 800;
+    }
+
+    .brand-sub {
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1.6px;
+      font-size: 12px;
+    }
+
+    .top-meta {
+      color: #00112e;
+      background: #f0f4f9;
+      border: 1px solid #e4ebf4;
+      border-radius: 6px;
+      min-width: 300px;
+      padding: 11px 16px;
+      text-align: left;
+      box-shadow: none;
+    }
+
+    .app {
+      max-width: 1520px;
+      margin: 0 auto;
+      padding: 0 20px 28px;
+      grid-template-columns: 280px minmax(0, 1fr);
+      gap: 28px;
+    }
+
+    .sidebar {
+      top: 96px;
+      padding-top: 28px;
+      gap: 28px;
+    }
+
+    .nav-panel,
+    .info-panel,
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow-soft);
+      overflow: hidden;
+    }
+
+    .nav-panel::before,
+    .info-panel::before,
+    .panel::before,
+    .panel::after,
+    .card::before {
+      display: none;
+    }
+
+    .nav-head {
+      padding: 18px 18px 8px;
+      color: #5c6d85;
+      font-size: 12px;
+      letter-spacing: 1.6px;
+    }
+
+    .hamburger {
+      color: #5c6d85;
+    }
+
+    .menu {
+      gap: 4px;
+      padding: 8px 10px 14px;
+    }
+
+    .menu-btn {
+      color: #263a56;
+      font-size: 17px;
+      border-radius: 0;
+      padding: 14px 12px;
+      gap: 14px;
+      border-right: 3px solid transparent;
+      transition: background-color 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+    }
+
+    .menu-btn .i {
+      width: 28px;
+      height: 28px;
+      border: 0;
+      color: #465973;
+      background: transparent;
+      font-size: 19px;
+    }
+
+    .menu-btn.active {
+      color: var(--brand);
+      background: #eef4ff;
+      border-color: transparent var(--brand) transparent transparent;
+      box-shadow: none;
+      font-weight: 800;
+    }
+
+    .menu-btn.active .i {
+      color: var(--brand);
+      background: transparent;
+    }
+
+    .menu-btn:hover {
+      transform: none;
+      background: #f3f7fc;
+      border-color: transparent var(--brand) transparent transparent;
+    }
+
+    .info-panel {
+      padding: 18px;
+    }
+
+    .action-panel {
+      padding: 18px;
+    }
+
+    .action-panel .upload-row {
+      grid-template-columns: 1fr;
+      margin-bottom: 0;
+    }
+
+    .action-panel .btn {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .info-title {
+      color: #0f172a;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    .info-list {
+      color: #52647d;
+      font-size: 14px;
+    }
+
+    .main {
+      gap: 28px;
+      padding-top: 28px;
+    }
+
+    .signal-strip {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow-soft);
+      padding: 14px 18px;
+    }
+
+    .signal-strip::before {
+      display: none;
+    }
+
+    .signal-item {
+      color: #263a56;
+      font-size: 13px;
+      text-transform: none;
+      letter-spacing: 0;
+      font-weight: 700;
+    }
+
+    .signal-dot,
+    .signal-dot.info,
+    .signal-dot.warn {
+      background: var(--brand);
+      animation: none;
+      box-shadow: none;
+    }
+
+    .signal-dot.warn {
+      background: #d97706;
+    }
+
+    .hero {
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+      color: var(--text);
+      padding: 0;
+      border-radius: 0;
+    }
+
+    .hero::after {
+      display: none;
+    }
+
+    .hero-title {
+      font-size: 36px;
+      letter-spacing: 0;
+      color: #090d18;
+    }
+
+    .hero-desc {
+      max-width: 900px;
+      color: #20283a;
+      font-size: 18px;
+      line-height: 1.6;
+    }
+
+    .hero-badge {
+      color: var(--brand);
+      background: #e8eefb;
+      border: 0;
+      border-radius: 12px;
+      font-weight: 800;
+      padding: 10px 14px;
+    }
+
+    .workspace {
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 28px;
+    }
+
+    .panel-title {
+      background: #ffffff;
+      border-bottom: 1px solid var(--line);
+      color: #0a0f1e;
+      font-size: 26px;
+      padding: 22px 28px;
+    }
+
+    .panel-body {
+      padding: 28px;
+    }
+
+    .grid-3 {
+      gap: 18px;
+    }
+
+    .field {
+      color: #172033;
+      font-size: 14px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    input[type="number"],
+    select,
+    textarea {
+      color: #0a0f1e;
+      background: #f8fafc;
+      border: 1px solid #d8e1ee;
+      border-radius: 6px;
+      font-size: 16px;
+      padding: 11px 12px;
+    }
+
+    textarea {
+      background-image: none;
+      min-height: 200px;
+    }
+
+    input[type="number"]:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(18, 63, 189, 0.14);
+    }
+
+    .row {
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .btn {
+      border-radius: 4px;
+      min-height: 38px;
+      font-size: 15px;
+      box-shadow: none;
+    }
+
+    .btn.primary {
+      color: #ffffff;
+      background: var(--brand);
+      box-shadow: none;
+    }
+
+    .btn.secondary {
+      color: #0f172a;
+      background: #ffffff;
+      border-color: #cfd8e7;
+    }
+
+    .btn:hover:not(:disabled) {
+      transform: none;
+      filter: none;
+      border-color: var(--brand);
+    }
+
+    .btn.primary:hover:not(:disabled) {
+      box-shadow: none;
+      background: #0737a8;
+    }
+
+    .cards {
+      grid-template-columns: repeat(4, minmax(150px, 1fr));
+      gap: 16px;
+      margin-top: 22px;
+    }
+
+    .card {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow-soft);
+      padding: 20px 22px;
+      animation: none;
+    }
+
+    .card:hover {
+      transform: none;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .card .k {
+      color: #52647d;
+      font-size: 13px;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+    }
+
+    .card .v {
+      color: #0b43c7;
+      font-size: 34px;
+      margin-top: 12px;
+      letter-spacing: 0;
+    }
+
+    .chart-wrap {
+      padding: 28px;
+      min-height: 600px;
+    }
+
+    #radarHost {
+      height: 520px;
+      background: #ffffff;
+      border: 1px solid #e5ebf3;
+      border-radius: 8px;
+      box-shadow: none;
+      animation: none;
+    }
+
+    .legend {
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .legend-item {
+      background: #f3f6fa;
+      border: 1px solid #dce5f0;
+      color: #1f2a44;
+      border-radius: 999px;
+      font-weight: 700;
+    }
+
+    .legend-item:hover {
+      transform: none;
+      background: #eaf1fb;
+      border-color: #c3d3e8;
+    }
+
+    .right-panel {
+      padding: 20px;
+      background: #ffffff;
+    }
+
+    .upload-row {
+      gap: 10px;
+    }
+
+    .hint {
+      color: #263a56;
+      background: #f5f8fc;
+      border: 1px solid #e2e9f3;
+      border-radius: 8px;
+      box-shadow: none;
+      font-size: 14px;
+      line-height: 1.7;
+      padding: 14px;
+    }
+
+    .file-name {
+      color: #52647d;
+      background: #f8fafc;
+      border: 1px solid #e2e9f3;
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+
+    .summary {
+      border-top: 1px solid #e5ebf3;
+      gap: 10px;
+      color: #263a56;
+    }
+
+    .right-panel .summary > div {
+      background: #f8fafc;
+      border: 1px solid #e5ebf3;
+      border-radius: 6px;
+      padding: 10px 12px;
+    }
+
+    .status {
+      color: #52647d;
+    }
+
+    .status.error {
+      color: var(--danger);
+    }
+
+    .table-wrap {
+      max-height: calc(100vh - 220px);
+      scrollbar-color: #c0cad8 #f4f7fb;
+    }
+
+    table {
+      background: #ffffff;
+      min-width: 980px;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    thead th {
+      background: #f6f9fd;
+      color: #4f6079;
+      border-bottom: 1px solid #d8e1ee;
+      text-transform: uppercase;
+      letter-spacing: 1.4px;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid #e7edf5;
+      color: #0f172a;
+      padding: 17px 28px;
+      font-size: 16px;
+    }
+
+    tbody tr:hover,
+    .row-active {
+      background: #f2f6fb;
+    }
+
+    .class-link {
+      color: var(--brand);
+    }
+
+    .metric-abbr {
+      cursor: help;
+      text-decoration: underline dotted #8aa0bd;
+      text-underline-offset: 3px;
+    }
+
+    @media (max-width: 1360px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .cards {
+        grid-template-columns: repeat(3, minmax(140px, 1fr));
+      }
+    }
+
+    @media (max-width: 1060px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        padding-top: 16px;
+      }
+
+      .top-meta {
+        display: none;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .topbar {
+        padding: 12px 14px;
+      }
+
+      .brand-title {
+        font-size: 20px;
+      }
+
+      .hero-title {
+        font-size: 28px;
+      }
+
+      .hero-desc {
+        font-size: 16px;
+      }
+
+      .panel-body,
+      .chart-wrap {
+        padding: 18px;
+      }
+
+      .cards {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -920,10 +1482,10 @@
       </div>
       <div class="brand-meta">
         <h1 class="brand-title">自动化软件度量平台</h1>
-        <p class="brand-sub">CodeMetric Studio Visual Dashboard</p>
+        <p class="brand-sub">工程度量洞察</p>
       </div>
     </div>
-    <div class="top-meta">课程级软件质量度量与可视化分析</div>
+    <div class="top-meta">搜索度量结果、类名或项目模块...</div>
   </header>
 
   <div class="app">
@@ -934,11 +1496,11 @@
           <span class="hamburger">≡</span>
         </div>
         <nav class="menu" id="menuNav">
-          <button class="menu-btn active" data-key="fp"><span class="i">🏠</span><span class="txt">功能点度量</span></button>
-          <button class="menu-btn" data-key="uc"><span class="i">💡</span><span class="txt">用例图度量</span></button>
-          <button class="menu-btn" data-key="oo"><span class="i">✈</span><span class="txt">面向对象度量</span></button>
-          <button class="menu-btn" data-key="cfg"><span class="i">🔗</span><span class="txt">控制流图度量</span></button>
-          <button class="menu-btn" data-key="loc"><span class="i">📎</span><span class="txt">代码行度量</span></button>
+          <button class="menu-btn active" data-key="fp"><span class="i">▥</span><span class="txt">功能点度量</span></button>
+          <button class="menu-btn" data-key="uc"><span class="i">⌁</span><span class="txt">用例图度量</span></button>
+          <button class="menu-btn" data-key="oo"><span class="i">▦</span><span class="txt">面向对象度量</span></button>
+          <button class="menu-btn" data-key="cfg"><span class="i">◇</span><span class="txt">控制流图度量</span></button>
+          <button class="menu-btn" data-key="loc"><span class="i">&lt;/&gt;</span><span class="txt">代码行度量</span></button>
         </nav>
       </section>
 
@@ -950,13 +1512,23 @@
           <li>导航切换不影响当前已加载数据。</li>
         </ol>
       </section>
+
+      <section class="info-panel action-panel">
+        <h2 class="info-title">数据操作</h2>
+        <div class="upload-row" id="sideActionRow">
+          <button class="btn primary" id="uploadBtn">点击上传</button>
+          <button class="btn secondary" id="startBtn">开始类图分析</button>
+          <button class="btn secondary" id="exportXmlBtn">导出XML格式</button>
+        </div>
+        <input id="fileInput" type="file" accept=".json,.oom" hidden />
+      </section>
     </aside>
 
     <main class="main">
       <section class="signal-strip" aria-label="系统状态">
-        <span class="signal-item"><span class="signal-dot"></span>数据流状态: Stable</span>
-        <span class="signal-item"><span class="signal-dot info"></span>图表引擎: Online</span>
-        <span class="signal-item"><span class="signal-dot warn"></span>风险监测: Watching</span>
+        <span class="signal-item"><span class="signal-dot"></span>数据流状态：稳定</span>
+        <span class="signal-item"><span class="signal-dot info"></span>图表引擎：在线</span>
+        <span class="signal-item"><span class="signal-dot warn"></span>风险监测：运行中</span>
       </section>
 
       <section class="hero">
@@ -1064,7 +1636,7 @@
                 <button class="btn secondary" id="cfg-auto">按已分析方法自动读取</button>
               </div>
               <label class="field">粘贴方法代码（Java/伪代码）
-                <textarea id="cfg-code" placeholder="例如: if/for/while/case/catch/&&/|| ..."></textarea>
+                <textarea id="cfg-code" placeholder="例如: if/for/while/case/catch/&amp;&amp;/|| ..."></textarea>
               </label>
               <div class="row">
                 <button class="btn primary" id="cfg-calc">计算圈复杂度</button>
@@ -1090,17 +1662,8 @@
         </article>
 
         <article class="panel right-panel">
-          <div class="upload-row">
-            <button class="btn primary" id="uploadBtn">点击上传</button>
-            <button class="btn secondary" id="startBtn">开始类图分析</button>
-          </div>
-          <input id="fileInput" type="file" accept=".json,.oom" hidden />
           <div class="hint">优先上传本工具生成的 <code>metrics.json</code>；<code>.oom</code> 当前仅记录文件名。</div>
           <div class="file-name" id="fileName">未选择文件，默认读取 /out/metrics.json</div>
-          <div class="upload-row">
-            <button class="btn secondary" id="exportXmlBtn">导出XML格式</button>
-            <div></div>
-          </div>
 
           <div class="summary" id="summaryBox"></div>
           <div class="status" id="rightStatus"></div>
@@ -1114,6 +1677,6 @@
     </main>
   </div>
 
-  <script src="./main.js?v=20260423-1"></script>
+  <script src="./main.js?v=20260427-1"></script>
 </body>
 </html>

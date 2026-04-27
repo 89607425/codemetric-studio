@@ -15,7 +15,7 @@ const state = {
 };
 
 const METRIC_AXES = ['WMC', 'DIT', 'NOC', 'CBO', 'RFC', 'LCOM'];
-const COLORS = ['#5470C6', '#91CC75', '#FAC858', '#EE6666', '#73C0DE', '#3BA272', '#FC8452', '#9A60B4', '#EA7CCC', '#5E78D5', '#8BC34A', '#D96F65'];
+const COLORS = ['#123FBD', '#5D8FE8', '#2F3A56', '#D60000', '#7EADEB', '#13A86B', '#D97706', '#6B7A90', '#9FB7D8', '#0B43C7', '#94A3B8', '#B42318'];
 const BUILTIN_TYPES = new Set(['void', 'boolean', 'byte', 'short', 'int', 'long', 'float', 'double', 'char', 'string', 'integer', 'object', 'list', 'map', 'set', 'date', 'datetime', 'money']);
 const ANALYZE_API_URL = 'http://127.0.0.1:9090/api/analyze-project';
 
@@ -99,16 +99,27 @@ function hydrateStaticCopy() {
 }
 
 function ensureProjectUploadControls() {
-  const uploadRow = document.querySelector('.right-panel .upload-row');
-  if (!uploadRow || byId('projectUploadBtn')) {
+  const uploadRow = document.querySelector('#sideActionRow') || document.querySelector('.right-panel .upload-row');
+  if (!uploadRow) {
     return;
   }
 
-  const button = document.createElement('button');
-  button.id = 'projectUploadBtn';
-  button.className = 'btn secondary';
-  button.textContent = '上传 Java 项目';
-  uploadRow.appendChild(button);
+  if (!byId('projectUploadBtn')) {
+    const button = document.createElement('button');
+    button.id = 'projectUploadBtn';
+    button.className = 'btn secondary';
+    button.textContent = '上传 Java 项目';
+    const exportButton = byId('exportXmlBtn');
+    if (exportButton?.parentElement === uploadRow) {
+      uploadRow.insertBefore(button, exportButton);
+    } else {
+      uploadRow.appendChild(button);
+    }
+  }
+
+  if (byId('projectDirInput')) {
+    return;
+  }
 
   const input = document.createElement('input');
   input.id = 'projectDirInput';
@@ -118,6 +129,28 @@ function ensureProjectUploadControls() {
   input.setAttribute('webkitdirectory', '');
   input.setAttribute('directory', '');
   document.body.appendChild(input);
+}
+
+const OO_METRIC_TITLES = {
+  WMC: '加权方法数',
+  DIT: '继承树深度',
+  NOC: '子类数量',
+  CBO: '对象间耦合度',
+  RFC: '类响应集',
+  LCOM: '方法内聚缺失度',
+  MOA: '聚合度量',
+  MFA: '功能抽象度',
+  CAM: '方法间内聚度',
+  CIS: '类接口规模',
+  Size1: '类规模指标',
+  MPC: '消息传递耦合度',
+};
+
+function metricHeader(label) {
+  const title = OO_METRIC_TITLES[label];
+  return title
+    ? `<th><span class="metric-abbr" title="${escapeHtml(title)}">${escapeHtml(label)}</span></th>`
+    : `<th>${escapeHtml(label)}</th>`;
 }
 
 function buildGlossaryHtml() {
@@ -709,7 +742,7 @@ function renderRadar() {
 
   const rows = getTopRows();
   if (!rows.length) {
-    host.innerHTML = '<div style="padding:16px;color:#9bb8db;">暂无可展示的类图/面向对象数据。</div>';
+    host.innerHTML = '<div style="padding:16px;color:#52647d;">暂无可展示的类图/面向对象数据。</div>';
     return;
   }
 
@@ -735,8 +768,8 @@ function renderRadar() {
     });
     const polygon = document.createElementNS(svgNS, 'polygon');
     polygon.setAttribute('points', points.map((p) => `${p.x},${p.y}`).join(' '));
-    polygon.setAttribute('fill', level % 2 === 0 ? 'rgba(30,56,90,0.25)' : 'rgba(19,38,65,0.2)');
-    polygon.setAttribute('stroke', '#2f5a89');
+    polygon.setAttribute('fill', level % 2 === 0 ? 'rgba(18,63,189,0.05)' : 'rgba(18,63,189,0.02)');
+    polygon.setAttribute('stroke', '#dfe7f2');
     polygon.setAttribute('stroke-width', '1');
     svg.appendChild(polygon);
   }
@@ -750,7 +783,7 @@ function renderRadar() {
     line.setAttribute('y1', String(cy));
     line.setAttribute('x2', String(point.x));
     line.setAttribute('y2', String(point.y));
-    line.setAttribute('stroke', '#3a6799');
+    line.setAttribute('stroke', '#d7e0ec');
     line.setAttribute('stroke-width', '1');
     svg.appendChild(line);
 
@@ -758,8 +791,8 @@ function renderRadar() {
     text.setAttribute('x', String(label.x));
     text.setAttribute('y', String(label.y));
     text.setAttribute('text-anchor', 'middle');
-    text.setAttribute('font-size', '24');
-    text.setAttribute('fill', '#cae3ff');
+    text.setAttribute('font-size', '13');
+    text.setAttribute('fill', '#52647d');
     text.textContent = axis;
     svg.appendChild(text);
   });
@@ -827,18 +860,7 @@ function renderTable() {
       <thead>
         <tr>
           <th>类名</th>
-          <th>WMC</th>
-          <th>DIT</th>
-          <th>NOC</th>
-          <th>CBO</th>
-          <th>RFC</th>
-          <th>LCOM</th>
-          <th>MOA</th>
-          <th>MFA</th>
-          <th>CAM</th>
-          <th>CIS</th>
-          <th>Size1</th>
-          <th>MPC</th>
+          ${['WMC', 'DIT', 'NOC', 'CBO', 'RFC', 'LCOM', 'MOA', 'MFA', 'CAM', 'CIS', 'Size1', 'MPC'].map(metricHeader).join('')}
         </tr>
       </thead>
       <tbody>${body}</tbody>
@@ -878,6 +900,10 @@ function dataComplexity(type, ret, det) {
   return 'low';
 }
 
+function complexityLabel(level) {
+  return { low: '低', avg: '中', high: '高' }[level] || level;
+}
+
 function calcFunctionPoint() {
   const vaf = num('fp-vaf');
   const c = state.fpCounts;
@@ -909,7 +935,7 @@ function addTransactionFunction() {
   const level = txComplexity(type, ftr, der);
   state.fpCounts[type][level] += 1;
   calcFunctionPoint();
-  setStatus('fp-status', `已添加事务功能：${type}，FTR=${ftr}，DER=${der}，复杂度=${level}。`);
+  setStatus('fp-status', `已添加事务功能：${type}，FTR=${ftr}，DER=${der}，复杂度=${complexityLabel(level)}。`);
 }
 
 function addDataFunction() {
@@ -919,7 +945,7 @@ function addDataFunction() {
   const level = dataComplexity(type, ret, det);
   state.fpCounts[type][level] += 1;
   calcFunctionPoint();
-  setStatus('fp-status', `已添加数据功能：${type}，RET=${ret}，DET=${det}，复杂度=${level}。`);
+  setStatus('fp-status', `已添加数据功能：${type}，RET=${ret}，DET=${det}，复杂度=${complexityLabel(level)}。`);
 }
 
 function resetFunctionPointCounts() {
