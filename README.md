@@ -1,187 +1,421 @@
 # CodeMetric Studio
 
-CodeMetric Studio 是一个面向 Java 项目的课程级软件度量平台，包含：
+CodeMetric Studio 是一个面向软件度量实验的课程级工具，支持：
 
-- 后端 CLI：自动扫描 Java 工程，计算 LoC、圈复杂度、CK 指标并输出报告
-- 前端页面：提供功能点、用例点、面向对象、控制流、代码行等可视化与交互式度量
-
----
-
-## 1. 当前已实现能力
-
-### 后端 CLI（自动化）
-- 递归扫描 Java 文件（自动过滤 `target`、`build`、`.git`）
-- 计算 LoC：总行、空行、注释行、有效代码行
-- 计算方法圈复杂度（`if/for/while/case/catch/&&/||/?`）
-- 计算 CK 指标：`WMC`、`DIT`、`NOC`、`CBO`、`RFC`、`LCOM`
-- **计算多态性指标：`NOP`、`NOM`、`NOO`、`POD`**
-- **计算扩展 OO 指标：`SK`、`DAC`、`MOA`、`MFA`、`CAM`、`CIS`、`NSC`**
-- **计算新增 OO 指标：`COA`、`Size1`、`MPC`、`AIF`、`MIF`**
-- 阈值告警（方法复杂度、类 WMC、类 CBO、多态度）
-- 输出 `metrics.json` 与 `metrics-report.md`
-
-### 指标口径（已按教学口径调整）
-
-#### CK 核心指标
-| 指标 | 全称 | 说明 |
-|------|------|------|
-| WMC | Weighted Methods per Class | 按类中定义的方法个数统计 |
-| DIT | Depth of Inheritance Tree | 继承树深度 |
-| NOC | Number of Children | 直接子类数量 |
-| CBO | Coupling Between Objects | 耦合对象类数 |
-| RFC | Response for a Class | 本类方法数 + 调用到的项目内其他方法数（去重） |
-| LCOM | Lack of Cohesion of Methods | 类内方法与字段内聚缺失度 |
-
-#### 多态性指标（课程补充）
-| 指标 | 全称 | 说明 | 解读 |
-|------|------|------|------|
-| NOP | Number of Polymorphic Methods | 可被重写的方法数（非static、非private、非final） | 反映类的多态潜力 |
-| NOM | Number of Overridden Methods | 实际被重写的方法数 | 反映多态的实际使用程度 |
-| NOO | Number of Overloads | 重载方法数量 | 反映方法的灵活性 |
-| POD | Polymorphism Degree | 多态度 = NOM/NOP | 0=未使用多态，1=完全多态 |
-| **OverrideRatio** | **重写率** | **= 子类重写方法数 / 父类方法总数** | **反映子类对父类的覆盖程度** |
-| **OverloadRatio** | **重载率** | **= 重载方法数 / 所有方法数** | **反映方法重载的使用程度** |
-
-#### 扩展 OO 指标
-| 指标 | 全称 | 说明 | 特点 |
-|------|------|------|------|
-| SK | Specialization Index | 特化指数 = NOC/DIT | 衡量类在继承层次中的特化程度 |
-| DAC | Data Abstraction Coupling | 数据抽象耦合 | 衡量类的"抽象宽度"，反映与其他类的关联程度 |
-| MOA | Measure of Aggregation | 聚合度量 | 衡量类的组合程度，作为实例变量的用户定义类型数 |
-| MFA | Measure of Functional Abstraction | 功能抽象度量 | 外部方法调用/总调用，反映依赖反转倾向 |
-| CAM | Computational Abstraction Metric | 计算抽象度量 | 衡量参数类型设计的复用程度 |
-| CIS | Class Interface Size | 类接口大小 | public方法数量，反映类的复杂度 |
-| NSC | Number of Static Methods | 静态方法数 | 反映过程式设计倾向 |
-
-#### 新增 OO 指标
-| 指标 | 全称 | 说明 | 特点 |
-|------|------|------|------|
-| COA | Cohesion Among Methods | 类内方法内聚性 | 基于方法对共享字段的访问计算内聚程度 |
-| Size1 | Class Size | 成员变量数 | 类的实例变量（字段）数量 |
-| MPC | Methods per Class | 类的方法总数 | 本类方法 + 继承方法数 |
-| AIF | Attribute Inheritance Factor | 属性继承因子 | 继承属性数 / 总属性数 |
-| MIF | Method Inheritance Factor | 方法继承因子 | 继承方法数 / 总方法数 |
-
-### 前端页面（交互 + 自动估算）
-- **功能点度量**
-  - 手工录入：事务功能（`FTR/DER`）、数据功能（`RET/DET`）自动判级
-  - 一键自动估算：基于 `metrics.json` 启发式生成 EI/EO/EQ/ILF/EIF 分档计数
-  - 结果：`UFP`、`VAF`、`调整后 FP`
-- **用例图度量**
-  - 支持 `UAW`、`UUC`、`UUCP`
-  - 按公式计算：`TCF = 0.6 + 0.01*TFactor`，`EF = 1.4 - 0.03*EFactor`，`UPC = UUCP*TCF*EF`
-  - 一键自动估算：基于 `metrics.json` 自动生成参与者/用例分档与 `TFactor/EFactor`
-- **面向对象度量**
-  - 读取 `metrics.json` 展示雷达图和类级明细
-  - 支持 XML 导出
-- **控制流图度量**
-  - 手工模式：粘贴代码，近似统计决策点并计算 CC
-  - 自动化A：基于 `metrics.json` 的类/方法下拉，一键读取方法 CC
-- **代码行度量**
-  - 手工模式：粘贴代码统计 LoC
-  - 自动模式：一键读取项目 `metrics.json` 的 LoC
+- 后端 CLI 分析 Java 项目，生成 `metrics.json` 和 `metrics-report.md`
+- 前端可视化查看功能点、用例点、面向对象、控制流、代码行等度量结果
+- 前端直接上传 `.oom` 设计图文件
+- 前端直接上传整个 Java 项目文件夹，并调用本地分析接口完成分析
 
 ---
 
-## 2. 环境要求
+## 1. 当前支持的输入方式
+
+前端目前支持 3 类输入：
+
+1. `metrics.json`
+2. `.oom` 设计图文件
+3. Java 项目文件夹
+
+不同输入方式对应的用途不同。
+
+| 输入类型 | 适用场景 | 可直接支持的度量 |
+|---|---|---|
+| `metrics.json` | 已经完成 Java 项目分析，想直接可视化查看结果 | 面向对象度量、控制流图度量、代码行度量，并可辅助自动估算功能点和用例点 |
+| `.oom` 类图 | 已有 UML 类图，想做结构类度量 | 面向对象度量为主，可辅助做功能点启发式估算 |
+| `.oom` 用例图 | 已有用例图，想做需求规模估算 | 用例图度量为主，可辅助做功能点启发式估算 |
+| `.oom` 顺序图 | 已有顺序图，想看交互复杂度 | 控制流复杂度近似估算、结构规模统计 |
+| Java 项目文件夹 | 想从源码直接分析 | 先分析生成内存中的度量结果，再在前端展示全部可视化模块 |
+
+---
+
+## 2. 前端页面如何使用
+
+前端页面地址：
+
+- `http://localhost:8080/web/`
+
+页面打开后默认是初始化状态，不会自动读取已有的 `out/metrics.json`。
+
+### 2.1 上传 `metrics.json`
+
+适合已经通过 CLI 分析过 Java 项目的人。
+
+操作步骤：
+
+1. 点击前端右侧的“点击上传”
+2. 选择 `metrics.json`
+3. 页面会自动加载类级指标、方法复杂度、LoC 等信息
+
+这类输入最完整，适合：
+
+- 面向对象度量
+- 控制流图度量
+- 代码行度量
+- 功能点自动估算
+- 用例点自动估算
+
+注意：
+
+- 功能点和用例点的“自动估算”是启发式辅助，不等于完全替代人工判级
+
+### 2.2 上传 `.oom` 文件
+
+前端支持直接上传以下设计图：
+
+- 类图 `.oom`
+- 用例图 `.oom`
+- 顺序图 `.oom`
+
+#### 上传类图 `.oom`
+
+适合做：
+
+- 面向对象度量
+
+页面会尝试提取：
+
+- 类
+- 属性
+- 操作
+- 类之间的关系
+
+可得到的结果包括：
+
+- 类级表格
+- OO 雷达图
+- 近似 CK/扩展 OO 指标
+
+限制：
+
+- 不能直接得到源码级圈复杂度
+- 不能直接得到标准用例图度量
+- 功能点只能做启发式估算，不是标准功能点做法
+
+#### 上传用例图 `.oom`
+
+适合做：
+
+- 用例图度量
+
+页面会尝试提取：
+
+- Actor
+- Use Case
+- Actor 和 Use Case 的关联关系
+
+可得到的结果包括：
+
+- UAW
+- UUC
+- UUCP
+- TCF / EF
+- UPC
+
+限制：
+
+- 不能直接做面向对象度量
+- 不能直接做源码级控制流复杂度
+- 功能点只支持启发式映射估算
+
+#### 上传顺序图 `.oom`
+
+适合做：
+
+- 控制流复杂度近似估算
+- 交互规模统计
+
+页面会尝试提取：
+
+- 参与对象
+- 消息数
+- 循环片段
+
+可得到的结果包括：
+
+- 交互消息数
+- 参与对象数
+- 近似圈复杂度
+- 图结构规模统计
+
+限制：
+
+- 不适合直接做标准功能点度量
+- 不适合直接做标准用例图度量
+- 不适合直接做完整的面向对象度量
+
+### 2.3 上传整个 Java 项目文件夹
+
+这是现在新增的功能。
+
+适合场景：
+
+- 不想先手工跑 CLI
+- 希望直接在前端上传源码目录并马上看到分析结果
+
+操作步骤：
+
+1. 启动前端页面
+2. 启动本地分析接口
+3. 点击“上传 Java 项目”
+4. 选择整个 Java 项目文件夹
+5. 前端会读取其中的 `.java` 文件并发给本地接口分析
+6. 分析结果会直接显示在页面上
+
+这类输入分析完成后，前端可用于：
+
+- 面向对象度量
+- 控制流图度量
+- 代码行度量
+- 功能点自动估算
+- 用例点自动估算
+
+注意：
+
+- 当前前端上传 Java 项目后，分析结果是直接返回前端展示的
+- 默认不会自动保存成新的 `metrics.json`
+- 也不会覆盖原来的 `out/metrics.json`
+
+---
+
+## 3. 前端里各度量模块是什么意思
+
+### 3.1 功能点度量
+
+功能点度量主要关心事务功能和数据功能。
+
+页面中会看到这些指标：
+
+- `EI`：External Input，外部输入
+- `EO`：External Output，外部输出
+- `EQ`：External Inquiry，外部查询
+- `ILF`：Internal Logical File，内部逻辑文件
+- `EIF`：External Interface File，外部接口文件
+- `FTR`：File Type Referenced
+- `DER`：Data Element Referenced
+- `RET`：Record Element Type
+- `DET`：Data Element Type
+- `VAF`：Value Adjustment Factor
+
+功能点模块支持：
+
+- 手工输入并计算
+- 基于 `metrics.json` 自动估算
+- 基于 `.oom` 用例图/类图做启发式估算
+
+### 3.2 用例图度量
+
+页面会计算：
+
+- `UAW`
+- `UUC`
+- `UUCP`
+- `TCF`
+- `EF`
+- `UPC`
+
+最适合的输入是：
+
+- 用例图 `.oom`
+
+也支持：
+
+- 手工输入
+- 基于 `metrics.json` 自动估算
+
+### 3.3 面向对象度量
+
+适合的输入：
+
+- `metrics.json`
+- 类图 `.oom`
+- 前端上传的 Java 项目分析结果
+
+主要展示：
+
+- WMC
+- DIT
+- NOC
+- CBO
+- RFC
+- LCOM
+- 以及扩展 OO 指标
+
+### 3.4 控制流图度量
+
+支持 3 种方式：
+
+1. 手工粘贴代码
+2. 从 `metrics.json` 读取方法复杂度
+3. 从顺序图 `.oom` 估算交互复杂度
+
+### 3.5 代码行度量
+
+支持：
+
+- 手工粘贴代码统计 LoC
+- 从 `metrics.json` 读取项目 LoC
+- 从 `.oom` 读取图结构规模
+
+---
+
+## 4. 后端终端如何使用
+
+## 4.1 环境要求
 
 - Java 17+
 - Maven 3.9+
-- Python 3.x（用于本地静态页面服务）
+- Python 3.x
 
----
-
-## 3. 快速开始
-
-### 3.1 编译项目
+## 4.2 编译项目
 
 ```bash
 mvn clean package
 ```
 
-### 3.2 运行 CLI 分析（示例：坏味道 UML 样例）
+## 4.3 使用 CLI 分析 Java 项目
 
 ```bash
-mvn exec:java "-Dexec.args=analyze --path bad-uml-sample --out out/bad-uml-analysis --format all --threshold docs/threshold.sample.json"
+mvn exec:java "-Dexec.args=analyze --path <你的Java项目路径> --out out --format all"
 ```
 
-若是 PowerShell，推荐保持 `-Dexec.args=...` 整体加双引号。
+常用参数：
 
-### 3.3 启动前端页面
+- `--path`：待分析 Java 项目根目录，必填
+- `--out`：输出目录，默认 `./out`
+- `--format`：输出格式，支持 `json`、`md`、`all`
+- `--module`：仅分析某个子目录
+- `--threshold`：阈值配置文件路径
 
-```bash
-python -m http.server 8080
-```
-
-浏览器访问：
-
-- `http://localhost:8080/web/`
-
-默认读取：
-
-- `http://localhost:8080/out/metrics.json`
-
----
-
-## 4. CLI 用法
-
-```bash
-mvn exec:java "-Dexec.args=analyze --path <待分析项目路径> --out <输出目录> --format <json|md|all> [--module <子目录>] [--threshold <阈值JSON>]"
-```
-
-### 参数说明
-- `--path <project_path>`：待分析项目根路径（必填）
-- `--out <output_dir>`：输出目录（默认 `./out`）
-- `--format json|md|all`：输出格式（默认 `all`）
-- `--module <subdir>`：仅分析指定子目录
-- `--threshold <config.json>`：阈值配置文件路径
-
-### 阈值配置示例
-
-```json
-{
-  "methodComplexity": 10,
-  "classWmc": 50,
-  "classCbo": 14
-}
-```
-
----
-
-## 5. 结果文件说明
-
-- `metrics.json`：完整机器可读度量结果（前端可直接加载）
-- `metrics-report.md`：报告型输出（便于实验文档粘贴）
-
----
-
-## 6. 内置样例
-
-- `sample-java-project`：基础样例（小规模）
-- `bad-uml-sample`：按 UML 结构构造的复杂样例（更适合展示风险与多指标）
-
-示例（输出到前端默认路径）：
+示例：
 
 ```bash
 mvn exec:java "-Dexec.args=analyze --path bad-uml-sample --out out --format all --threshold docs/threshold.sample.json"
 ```
 
+输出文件：
+
+- `out/metrics.json`
+- `out/metrics-report.md`
+
+## 4.4 启动前端静态页面
+
+在项目根目录执行：
+
+```bash
+python -m http.server 8080
+```
+
+然后访问：
+
+```text
+http://localhost:8080/web/
+```
+
+## 4.5 启动前端上传 Java 项目所需的本地分析接口
+
+如果你要在前端直接上传整个 Java 项目文件夹，需要先启动这个本地接口：
+
+```bash
+mvn exec:java "-Dexec.args=serve --port 9090"
+```
+
+启动后，前端会调用：
+
+```text
+http://127.0.0.1:9090/api/analyze-project
+```
+
+说明：
+
+- 这个接口只在本机使用
+- 前端上传 Java 项目时会把 `.java` 文件内容发给它
+- 它会在临时目录中分析，再把 JSON 结果返回给前端
+- 默认不会把结果持久化保存到 `out/metrics.json`
+
 ---
 
-## 7. 常见问题
+## 5. 推荐使用流程
 
-- 页面空白或无数据：确认通过 `python -m http.server 8080` 从项目根目录启动，并检查 `out/metrics.json` 是否存在。
-- 控制流“自动读取”下拉为空：先加载/上传 `metrics.json`，再切换到控制流页签。
-- 功能点/用例点自动估算结果偏差：当前为启发式自动估算，最终请按业务事实人工复核。
+### 方案 A：先分析再看结果
+
+适合想保留结果文件的人。
+
+1. 用 CLI 分析 Java 项目
+2. 生成 `out/metrics.json`
+3. 打开前端页面
+4. 上传 `metrics.json` 或手动读取它
+
+### 方案 B：前端直接上传 Java 项目
+
+适合想快速看结果的人。
+
+1. 启动前端静态页
+2. 启动 `serve` 本地接口
+3. 在前端点击“上传 Java 项目”
+4. 直接选择整个 Java 项目文件夹
+
+### 方案 C：只上传设计图
+
+适合课程实验中先做 UML、再做度量演示的人。
+
+1. 打开前端页面
+2. 上传 `.oom` 文件
+3. 根据图类型查看对应度量
 
 ---
 
-## 8. 项目结构
+## 6. 常见问题
+
+### Q1：页面打开后为什么没有自动显示 `out/metrics.json`？
+
+因为当前版本已经改成初始化状态，避免一打开页面就混入旧数据。
+
+### Q2：前端上传 Java 项目后，会生成新的 `metrics.json` 吗？
+
+当前不会。
+
+现在的行为是：
+
+- 后端临时分析
+- 把 JSON 结果直接返回前端
+- 前端直接展示
+- 不覆盖原来的 `out/metrics.json`
+- 也不自动新建新的 `metrics.json`
+
+### Q3：为什么前端上传 Java 项目时提示接口失败？
+
+通常是因为没有先启动本地分析接口。
+
+请先执行：
+
+```bash
+mvn exec:java "-Dexec.args=serve --port 9090"
+```
+
+### Q4：为什么 `.oom` 上传后有些指标不能算？
+
+因为不同图只包含不同层面的信息：
+
+- 类图偏结构
+- 用例图偏需求
+- 顺序图偏交互
+
+不是所有图都能直接支持所有度量方法。
+
+### Q5：功能点和用例点的自动估算为什么和人工结果不完全一样？
+
+因为当前自动估算是启发式辅助，适合实验展示和初步估算，最终结果仍建议人工复核。
+
+---
+
+## 7. 项目结构
 
 ```text
 codemetric-studio/
   pom.xml
   README.md
+  USER-GUIDE.md
   web/
     index.html
     main.js
@@ -195,11 +429,13 @@ codemetric-studio/
     model/
     config/
     util/
+    service/
   src/test/java/com/codemetricstudio/
   docs/
     PRD.md
     requirements-traceability.md
     threshold.sample.json
-  sample-java-project/
+  object/
+    *.oom
   bad-uml-sample/
 ```

@@ -1,17 +1,12 @@
 package com.codemetricstudio.cli;
 
-import com.codemetricstudio.aggregator.MetricsAggregator;
-import com.codemetricstudio.config.ThresholdConfig;
-import com.codemetricstudio.config.ThresholdConfigLoader;
-import com.codemetricstudio.metrics.ProjectAnalyzer;
 import com.codemetricstudio.model.ProjectMetrics;
 import com.codemetricstudio.reporter.JsonReporter;
 import com.codemetricstudio.reporter.MarkdownReporter;
-import com.codemetricstudio.scanner.ProjectScanner;
+import com.codemetricstudio.service.ProjectAnalysisService;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
-import java.util.List;
 import java.util.concurrent.Callable;
 
 @CommandLine.Command(name = "analyze", mixinStandardHelpOptions = true, description = "Analyze Java project metrics")
@@ -36,20 +31,7 @@ public class AnalyzeCommand implements Callable<Integer> {
     public Integer call() {
         long start = System.currentTimeMillis();
         try {
-            ProjectScanner scanner = new ProjectScanner();
-            List<Path> files = scanner.scan(projectPath, module);
-            if (files.isEmpty()) {
-                System.err.println("No Java files found under path: " + projectPath);
-                return 2;
-            }
-
-            ProjectAnalyzer analyzer = new ProjectAnalyzer();
-            MetricsAggregator aggregator = new MetricsAggregator();
-
-            ThresholdConfig config = ThresholdConfigLoader.load(thresholdPath);
-            String projectName = projectPath.getFileName() == null ? projectPath.toString() : projectPath.getFileName().toString();
-
-            ProjectMetrics metrics = aggregator.aggregate(analyzer.analyze(projectName, files), config);
+            ProjectMetrics metrics = new ProjectAnalysisService().analyzePath(projectPath, module, thresholdPath);
 
             if (format == OutputFormat.json || format == OutputFormat.all) {
                 new JsonReporter().write(metrics, outputDir);
