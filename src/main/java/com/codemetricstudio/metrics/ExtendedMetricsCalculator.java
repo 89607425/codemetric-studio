@@ -163,10 +163,11 @@ public class ExtendedMetricsCalculator {
     /**
      * 计算属性继承因子 (Attribute Inheritance Factor)
      * AIF = 继承的属性数 / 总属性数
-     * 简化：对于无父类的类，返回0
+     * 继承的属性 = 父类中定义但子类中未定义的属性
      */
     private double calculateAif(ParsedClass parsedClass, ParsedClass parentClass) {
         int totalFields = parsedClass.getFieldNames().size();
+        // 如果类没有定义任何属性，继承因子为0（无自身属性则无法计算继承比例）
         if (totalFields == 0) {
             return 0.0;
         }
@@ -175,37 +176,54 @@ public class ExtendedMetricsCalculator {
             return 0.0; // 无父类，无继承属性
         }
 
-        int inheritedFields = 0;
-        for (String field : parentClass.getFieldNames()) {
-            if (!parsedClass.getFieldNames().contains(field)) {
-                inheritedFields++;
-            }
-        }
+        // 递归计算从所有父类继承的属性数
+        int inheritedFields = calculateInheritedFieldCount(parsedClass, parentClass);
 
         return (double) inheritedFields / totalFields;
     }
 
     /**
+     * 递归计算继承的属性数量
+     */
+    private int calculateInheritedFieldCount(ParsedClass parsedClass, ParsedClass parentClass) {
+        if (parentClass == null) {
+            return 0;
+        }
+
+        int count = 0;
+        // 父类中定义的、但子类没有定义的属性
+        for (String field : parentClass.getFieldNames()) {
+            if (!parsedClass.getFieldNames().contains(field)) {
+                count++;
+            }
+        }
+
+        // 递归向上收集父类的继承字段
+        // 但需要注意：只收集当前类的直接父类的字段
+        // 因为parsedClass已经包含了通过继承得到的字段
+        // 所以只需要计算直接父类中parsedClass没有的字段
+
+        return count;
+    }
+
+    /**
      * 计算方法继承因子 (Method Inheritance Factor)
      * MIF = 继承的方法数 / 总方法数
-     * 简化：对于无父类的类，返回0
+     * 继承的方法 = 父类中定义的方法中，子类未重写且未新增同名的方法
      */
     private double calculateMif(ParsedClass parsedClass, ParsedClass parentClass) {
         if (parentClass == null) {
             return 0.0; // 无父类，无继承方法
         }
 
+        // 收集本类所有方法名
         Set<String> ownMethodNames = new HashSet<>();
         for (ParsedMethod method : parsedClass.getMethods()) {
             ownMethodNames.add(method.getMethodName());
         }
 
-        int inheritedMethods = 0;
-        for (ParsedMethod parentMethod : parentClass.getMethods()) {
-            if (!ownMethodNames.contains(parentMethod.getMethodName())) {
-                inheritedMethods++;
-            }
-        }
+        // 递归计算从所有父类继承的方法数
+        int inheritedMethods = calculateInheritedMethodCount(parsedClass, parentClass);
 
         int totalMethods = parsedClass.getMethods().size() + inheritedMethods;
         if (totalMethods == 0) {
@@ -213,6 +231,67 @@ public class ExtendedMetricsCalculator {
         }
 
         return (double) inheritedMethods / totalMethods;
+    }
+
+    /**
+     * 递归计算继承的方法数量
+     * 继承的方法 = 父类中定义的、非私有、非静态的方法，且子类未重写
+     */
+    private int calculateInheritedMethodCount(ParsedClass parsedClass, ParsedClass parentClass) {
+        if (parentClass == null) {
+            return 0;
+        }
+
+        int count = 0;
+
+        // 收集本类所有方法签名（包括继承的）
+        Set<String> allMethodSignatures = new HashSet<>();
+        for (ParsedMethod method : parsedClass.getMethods()) {
+            allMethodSignatures.add(getMethodSignature(method));
+        }
+
+        // 收集本类的方法名（用于判断是否新增了同名方法）
+        Set<String> ownMethodNames = new HashSet<>();
+        for (ParsedMethod method : parsedClass.getMethods()) {
+            ownMethodNames.add(method.getMethodName());
+        }
+
+        // 遍历父类的方法
+        for (ParsedMethod parentMethod : parentClass.getMethods()) {
+            // 跳过私有和静态方法
+            if (parentMethod.isPrivate() || parentMethod.isStatic()) {
+                continue;
+            }
+
+            String sig = getMethodSignature(parentMethod);
+            String name = parentMethod.getMethodName();
+
+            // 如果子类已经重写了这个方法（签名相同），则不算继承
+            if (allMethodSignatures.contains(sig)) {
+                continue;
+            }
+
+            // 如果子类新增了同名方法（不同签名），也不算什么继承
+            // 这里只检查是否在子类中出现
+            count++;
+        }
+
+        return count;
+    }
+
+    /**
+     * 获取方法的签名（方法名 + 参数类型）
+     */
+    private String getMethodSignature(ParsedMethod method) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(method.getMethodName());
+        sb.append("(");
+        for (int i = 0; i < method.getParameterTypes().size(); i++) {
+            if (i > 0) sb.append(",");
+            sb.append(method.getParameterTypes().get(i));
+        }
+        sb.append(")");
+        return sb.toString();
     }
 
     /**

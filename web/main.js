@@ -138,12 +138,24 @@ const OO_METRIC_TITLES = {
   CBO: '对象间耦合度',
   RFC: '类响应集',
   LCOM: '方法内聚缺失度',
+  NOP: '可被重写的方法数',
+  NOM: '实际被重写的方法数',
+  NOO: '重载方法数量',
+  POD: '多态度',
+  overrideRatio: '重写率',
+  overloadRatio: '重载率',
+  SK: '特化指数',
+  DAC: '数据抽象耦合',
   MOA: '聚合度量',
   MFA: '功能抽象度',
-  CAM: '方法间内聚度',
+  CAM: '计算抽象度量',
   CIS: '类接口规模',
-  Size1: '类规模指标',
-  MPC: '消息传递耦合度',
+  NSC: '静态方法数',
+  COA: '类内方法内聚性',
+  Size1: '成员变量数',
+  MPC: '类的方法总数',
+  AIF: '属性继承因子',
+  MIF: '方法继承因子',
 };
 
 function metricHeader(label) {
@@ -846,12 +858,24 @@ function renderTable() {
       <td>${row.cbo}</td>
       <td>${row.rfc}</td>
       <td>${row.lcom.toFixed(2)}</td>
+      <td>${row.nop}</td>
+      <td>${row.nom}</td>
+      <td>${row.noo}</td>
+      <td>${row.pod.toFixed(2)}</td>
+      <td>${row.overrideRatio.toFixed(2)}</td>
+      <td>${row.overloadRatio.toFixed(2)}</td>
+      <td>${row.sk.toFixed(2)}</td>
+      <td>${row.dac}</td>
       <td>${row.moa}</td>
       <td>${row.mfa.toFixed(2)}</td>
       <td>${row.cam.toFixed(2)}</td>
       <td>${row.cis}</td>
+      <td>${row.nsc}</td>
+      <td>${row.coa.toFixed(2)}</td>
       <td>${row.size1}</td>
       <td>${row.mpc}</td>
+      <td>${row.aif.toFixed(2)}</td>
+      <td>${row.mif.toFixed(2)}</td>
     </tr>`;
   }).join('');
 
@@ -860,7 +884,7 @@ function renderTable() {
       <thead>
         <tr>
           <th>类名</th>
-          ${['WMC', 'DIT', 'NOC', 'CBO', 'RFC', 'LCOM', 'MOA', 'MFA', 'CAM', 'CIS', 'Size1', 'MPC'].map(metricHeader).join('')}
+          ${['WMC', 'DIT', 'NOC', 'CBO', 'RFC', 'LCOM', 'NOP', 'NOM', 'NOO', 'POD', 'overrideRatio', 'overloadRatio', 'SK', 'DAC', 'MOA', 'MFA', 'CAM', 'CIS', 'NSC', 'COA', 'Size1', 'MPC', 'AIF', 'MIF'].map(metricHeader).join('')}
         </tr>
       </thead>
       <tbody>${body}</tbody>
@@ -1291,12 +1315,24 @@ function toXml(rows) {
     lines.push(`    <CBO>${row.cbo}</CBO>`);
     lines.push(`    <RFC>${row.rfc}</RFC>`);
     lines.push(`    <LCOM>${row.lcom.toFixed(2)}</LCOM>`);
+    lines.push(`    <NOP>${row.nop}</NOP>`);
+    lines.push(`    <NOM>${row.nom}</NOM>`);
+    lines.push(`    <NOO>${row.noo}</NOO>`);
+    lines.push(`    <POD>${row.pod.toFixed(2)}</POD>`);
+    lines.push(`    <OverrideRatio>${row.overrideRatio.toFixed(2)}</OverrideRatio>`);
+    lines.push(`    <OverloadRatio>${row.overloadRatio.toFixed(2)}</OverloadRatio>`);
+    lines.push(`    <SK>${row.sk.toFixed(2)}</SK>`);
+    lines.push(`    <DAC>${row.dac}</DAC>`);
     lines.push(`    <MOA>${row.moa}</MOA>`);
     lines.push(`    <MFA>${row.mfa.toFixed(2)}</MFA>`);
     lines.push(`    <CAM>${row.cam.toFixed(2)}</CAM>`);
     lines.push(`    <CIS>${row.cis}</CIS>`);
+    lines.push(`    <NSC>${row.nsc}</NSC>`);
+    lines.push(`    <COA>${row.coa.toFixed(2)}</COA>`);
     lines.push(`    <Size1>${row.size1}</Size1>`);
     lines.push(`    <MPC>${row.mpc}</MPC>`);
+    lines.push(`    <AIF>${row.aif.toFixed(2)}</AIF>`);
+    lines.push(`    <MIF>${row.mif.toFixed(2)}</MIF>`);
     lines.push('  </class>');
   });
   lines.push('</classMetrics>');

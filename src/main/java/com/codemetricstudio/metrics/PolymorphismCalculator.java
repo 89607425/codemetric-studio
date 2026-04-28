@@ -95,12 +95,9 @@ public class PolymorphismCalculator {
     /**
      * 计算实际被重写的方法数量
      * 方法签名与父类相同时视为重写
+     * 不再依赖parentClass参数，直接使用isOverridden标志
      */
     private int countOverriddenMethods(ParsedClass parsedClass, ParsedClass parentClass) {
-        if (parentClass == null) {
-            return 0;
-        }
-
         int count = 0;
         for (ParsedMethod method : parsedClass.getMethods()) {
             if (method.isOverridden()) {

@@ -68,19 +68,20 @@ public class JavaAstParser {
             classMap.put(clazz.getQualifiedName(), clazz);
         }
 
-        // 构建每个类的父类方法签名集合
+        // 构建每个类的父类+父接口的方法签名集合
         Map<String, Set<String>> parentMethodSignatures = new HashMap<>();
         for (ParsedClass clazz : allClasses) {
-            String superClass = clazz.getSuperClass();
-            if (superClass != null && !superClass.isBlank()) {
-                ParsedClass parent = classMap.get(superClass);
-                if (parent != null) {
-                    Set<String> signatures = new HashSet<>();
-                    for (ParsedMethod method : parent.getMethods()) {
-                        signatures.add(getMethodSignature(method));
-                    }
-                    parentMethodSignatures.put(clazz.getQualifiedName(), signatures);
-                }
+            Set<String> signatures = new HashSet<>();
+            Set<String> visited = new HashSet<>();
+
+            // 收集直接父类的方法（递归向上）
+            collectParentMethods(clazz, classMap, signatures, visited);
+
+            // 收集所有实现的接口的方法（包括继承链上的类实现的接口）
+            collectAllInterfaceMethods(clazz, classMap, signatures);
+
+            if (!signatures.isEmpty()) {
+                parentMethodSignatures.put(clazz.getQualifiedName(), signatures);
             }
         }
 
@@ -96,6 +97,131 @@ public class JavaAstParser {
                 }
             }
         }
+    }
+
+    /**
+     * 递归收集父类的方法
+     */
+    private void collectParentMethods(ParsedClass clazz, Map<String, ParsedClass> classMap,
+                                      Set<String> signatures, Set<String> visited) {
+        if (visited.contains(clazz.getQualifiedName())) {
+            return; // 防止循环继承
+        }
+        visited.add(clazz.getQualifiedName());
+
+        String superClass = clazz.getSuperClass();
+        if (superClass != null && !superClass.isBlank()) {
+            ParsedClass parent = classMap.get(superClass);
+            if (parent != null) {
+                for (ParsedMethod method : parent.getMethods()) {
+                    signatures.add(getMethodSignature(method));
+                }
+                // 继续向上收集
+                collectParentMethods(parent, classMap, signatures, visited);
+            }
+        }
+    }
+
+    /**
+     * 递归收集类实现的接口的方法（包括继承链上的）
+     */
+    private void collectAllInterfaceMethods(ParsedClass clazz, Map<String, ParsedClass> classMap,
+                                            Set<String> signatures) {
+        // 收集当前类的所有父类的接口实现
+        Set<String> visited = new HashSet<>();
+        collectInterfacesFromHierarchy(clazz, classMap, signatures, visited);
+    }
+
+    /**
+     * 从类的继承层次中收集所有接口方法
+     */
+    private void collectInterfacesFromHierarchy(ParsedClass clazz, Map<String, ParsedClass> classMap,
+                                                Set<String> signatures, Set<String> visited) {
+        if (visited.contains(clazz.getQualifiedName())) {
+            return;
+        }
+        visited.add(clazz.getQualifiedName());
+
+        // 首先检查当前类的implementedInterfaces
+        for (String interfaceName : clazz.getImplementedInterfaces()) {
+            ParsedClass intf = classMap.get(interfaceName);
+            if (intf == null) {
+                // 尝试用简单名称查找
+                for (ParsedClass pc : classMap.values()) {
+                    if (pc.isInterface() && pc.getClassName().equals(interfaceName)) {
+                        intf = pc;
+                        break;
+                    }
+                }
+            }
+            if (intf != null && intf.isInterface()) {
+                for (ParsedMethod method : intf.getMethods()) {
+                    signatures.add(getMethodSignature(method));
+                }
+            }
+        }
+
+        // 然后检查当前类的所有祖先类是否实现了接口
+        // 通过遍历classMap找到所有实现接口的类
+        for (ParsedClass potentialInterface : classMap.values()) {
+            if (!potentialInterface.isInterface()) {
+                continue;
+            }
+            String intfName = potentialInterface.getClassName(); // 使用简单名称
+
+            // 检查当前类及其父类是否实现了这个接口
+            if (doesClassImplementInterface(clazz, intfName, classMap)) {
+                for (ParsedMethod method : potentialInterface.getMethods()) {
+                    signatures.add(getMethodSignature(method));
+                }
+            }
+        }
+
+        // 继续从父类收集
+        String superClass = clazz.getSuperClass();
+        if (superClass != null && !superClass.isBlank()) {
+            ParsedClass parent = classMap.get(superClass);
+            if (parent != null) {
+                collectInterfacesFromHierarchy(parent, classMap, signatures, visited);
+            }
+        }
+    }
+
+    /**
+     * 检查clazz或其父类是否实现了指定的接口
+     */
+    private boolean doesClassImplementInterface(ParsedClass clazz, String interfaceName, Map<String, ParsedClass> classMap) {
+        Set<String> visited = new HashSet<>();
+        return checkImplementInterface(clazz, interfaceName, classMap, visited);
+    }
+
+    private boolean checkImplementInterface(ParsedClass clazz, String interfaceName, Map<String, ParsedClass> classMap, Set<String> visited) {
+        if (visited.contains(clazz.getQualifiedName())) {
+            return false;
+        }
+        visited.add(clazz.getQualifiedName());
+
+        // 检查当前类的implementedInterfaces
+        for (String implIntf : clazz.getImplementedInterfaces()) {
+            // 使用简单名称比较
+            String implSimpleName = implIntf.contains(".") ? implIntf.substring(implIntf.lastIndexOf('.') + 1) : implIntf;
+            if (implSimpleName.equals(interfaceName) || implIntf.equals(interfaceName)) {
+                return true;
+            }
+        }
+
+        // 检查父类
+        String superClass = clazz.getSuperClass();
+        if (superClass != null && !superClass.isBlank()) {
+            ParsedClass parent = classMap.get(superClass);
+            if (parent != null) {
+                if (checkImplementInterface(parent, interfaceName, classMap, visited)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -138,7 +264,11 @@ public class JavaAstParser {
         parsedClass.setFieldNames(fields);
         parsedClass.setFieldTypes(fieldTypes);
 
-        declaration.getImplementedTypes().forEach(type -> parsedClass.getCoupledTypes().add(normalizeType(type.getNameAsString())));
+        declaration.getImplementedTypes().forEach(type -> {
+            String normalizedType = normalizeType(type.getNameAsString());
+            parsedClass.getCoupledTypes().add(normalizedType);
+            parsedClass.getImplementedInterfaces().add(normalizedType);
+        });
         declaration.getExtendedTypes().forEach(type -> parsedClass.getCoupledTypes().add(normalizeType(type.getNameAsString())));
 
         // 先解析所有方法
@@ -208,11 +338,9 @@ public class JavaAstParser {
         }
         parsedMethod.setParameterTypes(paramTypes);
 
-        // 检测重写：非static、非private的方法
-        // 重写方法不需要 @Override 注解也能识别，只要方法签名与父类匹配
-        boolean isOverride = !method.isStatic() && !method.isPrivate() &&
-                             !parentMethodSignatures.isEmpty();
-        parsedMethod.setOverridden(isOverride);
+        // 检测重写：非static、非private的方法，且有父类签名
+        // 初始设置为false，在detectOverriddenMethods中会正确设置
+        parsedMethod.setOverridden(false);
 
         int loc = method.getRange()
                 .map(r -> r.end.line - r.begin.line + 1)

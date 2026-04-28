@@ -22,6 +22,9 @@ public class ParsedClass {
     // 方法列表
     private List<ParsedMethod> methods = new ArrayList<>();
 
+    // 实现的接口列表
+    private Set<String> implementedInterfaces = new HashSet<>();
+
     // 注解数量（用于多态度量）
     private int annotationCount = 0;
 
@@ -103,5 +106,13 @@ public class ParsedClass {
 
     public void setAnnotationCount(int annotationCount) {
         this.annotationCount = annotationCount;
+    }
+
+    public Set<String> getImplementedInterfaces() {
+        return implementedInterfaces;
+    }
+
+    public void setImplementedInterfaces(Set<String> implementedInterfaces) {
+        this.implementedInterfaces = implementedInterfaces;
     }
 }
