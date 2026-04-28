@@ -57,12 +57,12 @@ mvn exec:java "-Dexec.args=analyze --path bad-uml-sample --out out --format all"
 在项目根目录执行：
 
 ```bash
-python -m http.server 8080
+mvn exec:java "-Dexec.args=serve --port 9090"
 ```
 
 #### 2.2 打开浏览器
 
-访问：**http://localhost:8080/web/**
+访问：**http://127.0.0.1:9090/web/**
 
 #### 2.3 加载数据
 
@@ -92,8 +92,11 @@ python -m http.server 8080
 > 2. `.oom`：适合直接读取类图、用例图、顺序图并进入对应度量模块
 > 3. Java 项目文件夹：适合在前端直接触发后端分析并自动返回 `metrics.json` 结果
 
-> **前端直传 Java 项目前，需要先启动本地分析接口：**
+> **前端直传 Java 项目或使用智能分析前，需要先启动 Java 本地服务：**
 > `mvn exec:java "-Dexec.args=serve --port 9090"`
+>
+> 如果要使用硅基流动智能分析，请先执行：
+> `export SILICONFLOW_API_KEY="<你的硅基流动 API Key>"`
 
 ---
 
@@ -164,6 +167,20 @@ python -m http.server 8080
 - **自动模式**：点击"使用当前项目分析结果"
 
 **输出指标**：总行数、空行、注释行、有效代码行
+
+---
+
+### 6. 智能分析
+
+**用途**：调用硅基流动 API，结合用户输入、当前软件度量指标和类图/顺序图结构，分析设计质量。
+
+**使用方式**：
+- 先加载 `metrics.json`、`.oom` 设计图，或上传 Java 项目完成分析
+- 切换左侧“智能分析”标签
+- 输入关注点，例如职责划分、耦合风险、顺序图交互复杂度
+- 点击“开始智能分析”
+
+**输出内容**：总体结论、关键证据、主要风险和可执行改进建议。
 
 ---
 
@@ -249,10 +266,10 @@ mvn clean package
 mvn exec:java "-Dexec.args=analyze --path <项目路径> --out out --format all"
 
 # 启动前端
-python -m http.server 8080
+mvn exec:java "-Dexec.args=serve --port 9090"
 
 # 访问前端
-# 浏览器打开 http://localhost:8080/web/
+# 浏览器打开 http://127.0.0.1:9090/web/
 ```
 
 ---
