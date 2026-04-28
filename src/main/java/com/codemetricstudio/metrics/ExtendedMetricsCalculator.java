@@ -5,8 +5,10 @@ import com.codemetricstudio.model.ParsedClass;
 import com.codemetricstudio.model.ParsedMethod;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -163,7 +165,7 @@ public class ExtendedMetricsCalculator {
     /**
      * 计算属性继承因子 (Attribute Inheritance Factor)
      * AIF = 继承的属性数 / 总属性数
-     * 继承的属性 = 父类中定义但子类中未定义的属性
+     * 继承的属性 = 直接父类中定义但子类中未定义的属性
      */
     private double calculateAif(ParsedClass parsedClass, ParsedClass parentClass) {
         int totalFields = parsedClass.getFieldNames().size();
@@ -176,87 +178,37 @@ public class ExtendedMetricsCalculator {
             return 0.0; // 无父类，无继承属性
         }
 
-        // 递归计算从所有父类继承的属性数
-        int inheritedFields = calculateInheritedFieldCount(parsedClass, parentClass);
+        // 只计算直接父类的继承属性
+        int inheritedFields = 0;
+        for (String field : parentClass.getFieldNames()) {
+            if (!parsedClass.getFieldNames().contains(field)) {
+                inheritedFields++;
+            }
+        }
 
         return (double) inheritedFields / totalFields;
     }
 
     /**
-     * 递归计算继承的属性数量
-     */
-    private int calculateInheritedFieldCount(ParsedClass parsedClass, ParsedClass parentClass) {
-        if (parentClass == null) {
-            return 0;
-        }
-
-        int count = 0;
-        // 父类中定义的、但子类没有定义的属性
-        for (String field : parentClass.getFieldNames()) {
-            if (!parsedClass.getFieldNames().contains(field)) {
-                count++;
-            }
-        }
-
-        // 递归向上收集父类的继承字段
-        // 但需要注意：只收集当前类的直接父类的字段
-        // 因为parsedClass已经包含了通过继承得到的字段
-        // 所以只需要计算直接父类中parsedClass没有的字段
-
-        return count;
-    }
-
-    /**
      * 计算方法继承因子 (Method Inheritance Factor)
      * MIF = 继承的方法数 / 总方法数
-     * 继承的方法 = 父类中定义的方法中，子类未重写且未新增同名的方法
+     * 继承的方法 = 直接父类中定义的方法中，子类未重写且未新增同名的方法
      */
     private double calculateMif(ParsedClass parsedClass, ParsedClass parentClass) {
         if (parentClass == null) {
             return 0.0; // 无父类，无继承方法
         }
 
-        // 收集本类所有方法名
-        Set<String> ownMethodNames = new HashSet<>();
-        for (ParsedMethod method : parsedClass.getMethods()) {
-            ownMethodNames.add(method.getMethodName());
-        }
-
-        // 递归计算从所有父类继承的方法数
-        int inheritedMethods = calculateInheritedMethodCount(parsedClass, parentClass);
-
-        int totalMethods = parsedClass.getMethods().size() + inheritedMethods;
-        if (totalMethods == 0) {
-            return 0.0;
-        }
-
-        return (double) inheritedMethods / totalMethods;
-    }
-
-    /**
-     * 递归计算继承的方法数量
-     * 继承的方法 = 父类中定义的、非私有、非静态的方法，且子类未重写
-     */
-    private int calculateInheritedMethodCount(ParsedClass parsedClass, ParsedClass parentClass) {
-        if (parentClass == null) {
-            return 0;
-        }
-
-        int count = 0;
+        // 只计算直接父类的继承方法
+        int inheritedMethods = 0;
 
         // 收集本类所有方法签名（包括继承的）
-        Set<String> allMethodSignatures = new HashSet<>();
+        Set<String> childSignatures = new HashSet<>();
         for (ParsedMethod method : parsedClass.getMethods()) {
-            allMethodSignatures.add(getMethodSignature(method));
+            childSignatures.add(getMethodSignature(method));
         }
 
-        // 收集本类的方法名（用于判断是否新增了同名方法）
-        Set<String> ownMethodNames = new HashSet<>();
-        for (ParsedMethod method : parsedClass.getMethods()) {
-            ownMethodNames.add(method.getMethodName());
-        }
-
-        // 遍历父类的方法
+        // 遍历直接父类的方法
         for (ParsedMethod parentMethod : parentClass.getMethods()) {
             // 跳过私有和静态方法
             if (parentMethod.isPrivate() || parentMethod.isStatic()) {
@@ -264,19 +216,19 @@ public class ExtendedMetricsCalculator {
             }
 
             String sig = getMethodSignature(parentMethod);
-            String name = parentMethod.getMethodName();
 
             // 如果子类已经重写了这个方法（签名相同），则不算继承
-            if (allMethodSignatures.contains(sig)) {
-                continue;
+            if (!childSignatures.contains(sig)) {
+                inheritedMethods++;
             }
-
-            // 如果子类新增了同名方法（不同签名），也不算什么继承
-            // 这里只检查是否在子类中出现
-            count++;
         }
 
-        return count;
+        int totalMethods = parsedClass.getMethods().size() + inheritedMethods;
+        if (totalMethods == 0) {
+            return 0.0;
+        }
+
+        return (double) inheritedMethods / totalMethods;
     }
 
     /**
@@ -308,10 +260,17 @@ public class ExtendedMetricsCalculator {
 
     /**
      * 计算数据抽象耦合 (Data Abstraction Coupling)
-     * 类中作为参数、局部变量、返回类型使用的用户定义类型数量
+     * 类中作为参数、局部变量、返回类型、字段类型使用的用户定义类型数量
      */
     private int calculateDac(ParsedClass parsedClass, List<ParsedClass> projectClasses) {
         Set<String> userDefinedTypes = new HashSet<>();
+
+        // 获取字段类型中的用户定义类型
+        for (String fieldType : parsedClass.getFieldTypes()) {
+            if (isUserDefinedType(fieldType, projectClasses)) {
+                userDefinedTypes.add(fieldType);
+            }
+        }
 
         for (ParsedMethod method : parsedClass.getMethods()) {
             // 获取方法参数中的用户定义类型
