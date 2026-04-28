@@ -701,6 +701,105 @@
       color: var(--danger);
     }
 
+    .analysis-result {
+      margin-top: 18px;
+      display: grid;
+      gap: 12px;
+      color: #142033;
+      line-height: 1.75;
+    }
+
+    .analysis-result:empty {
+      display: none;
+    }
+
+    .analysis-result h3,
+    .analysis-result h4,
+    .analysis-result h5 {
+      margin: 6px 0 2px;
+      color: #0a0f1e;
+      font-size: 20px;
+    }
+
+    .analysis-result p {
+      margin: 0;
+    }
+
+    .analysis-result ul {
+      margin: 0;
+      padding-left: 22px;
+    }
+
+    .analysis-result code {
+      background: #eef3f9;
+      border: 1px solid #dce5f0;
+      border-radius: 4px;
+      padding: 1px 4px;
+      color: #0b43c7;
+    }
+
+    .metric-tip {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      width: fit-content;
+      cursor: help;
+      text-decoration: underline dotted #8aa0bd;
+      text-underline-offset: 3px;
+    }
+
+    .metric-tip::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: 0;
+      bottom: calc(100% + 8px);
+      width: max-content;
+      max-width: min(320px, 72vw);
+      padding: 9px 10px;
+      border-radius: 6px;
+      background: #0f172a;
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1.45;
+      letter-spacing: 0;
+      text-transform: none;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.2);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(4px);
+      transition: opacity 0.12s ease, transform 0.12s ease;
+      z-index: 40;
+      white-space: normal;
+    }
+
+    .metric-tip::before {
+      content: "";
+      position: absolute;
+      left: 12px;
+      bottom: calc(100% + 3px);
+      border: 5px solid transparent;
+      border-top-color: #0f172a;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.12s ease;
+      z-index: 41;
+    }
+
+    .metric-tip:hover::after,
+    .metric-tip:focus-visible::after,
+    .metric-tip:hover::before,
+    .metric-tip:focus-visible::before {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .workspace > .panel,
+    .cards .card {
+      overflow: visible;
+    }
+
     .table-panel {
       overflow: hidden;
     }
@@ -1501,6 +1600,7 @@
           <button class="menu-btn" data-key="oo"><span class="i">▦</span><span class="txt">面向对象度量</span></button>
           <button class="menu-btn" data-key="cfg"><span class="i">◇</span><span class="txt">控制流图度量</span></button>
           <button class="menu-btn" data-key="loc"><span class="i">&lt;/&gt;</span><span class="txt">代码行度量</span></button>
+          <button class="menu-btn" data-key="ai"><span class="i">✦</span><span class="txt">智能分析</span></button>
         </nav>
       </section>
 
@@ -1556,36 +1656,36 @@
           <div id="tab-fp" class="tab-pane">
             <div class="panel-body">
               <div class="grid-3">
-                <label class="field">事务类型
+                <label class="field"><span class="metric-tip" tabindex="0" data-tooltip="事务功能分类：EI 表示外部输入，EO 表示外部输出，EQ 表示外部查询。">事务类型</span>
                   <select id="fp-tx-type">
-                    <option value="EI">EI</option>
-                    <option value="EO">EO</option>
-                    <option value="EQ">EQ</option>
+                    <option value="EI" title="External Input，外部输入，例如新增、修改、删除。">EI</option>
+                    <option value="EO" title="External Output，外部输出，例如报表、统计、通知。">EO</option>
+                    <option value="EQ" title="External Inquiry，外部查询，通常不维护内部数据。">EQ</option>
                   </select>
                 </label>
-                <label class="field">事务 FTR<input id="fp-tx-ftr" type="number" min="0" value="0" /></label>
-                <label class="field">事务 DER<input id="fp-tx-der" type="number" min="0" value="0" /></label>
+                <label class="field"><span class="metric-tip" tabindex="0" data-tooltip="FTR 是事务功能引用的数据文件类型数量，用于判断 EI/EO/EQ 的复杂度。">事务 FTR</span><input id="fp-tx-ftr" type="number" min="0" value="0" /></label>
+                <label class="field"><span class="metric-tip" tabindex="0" data-tooltip="DER 是事务涉及的数据元素数量，用于判断 EI/EO/EQ 的复杂度。">事务 DER</span><input id="fp-tx-der" type="number" min="0" value="0" /></label>
               </div>
               <div class="row">
                 <button class="btn secondary" id="fp-add-tx">添加事务功能</button>
               </div>
 
               <div class="grid-3" style="margin-top:10px;">
-                <label class="field">数据类型
+                <label class="field"><span class="metric-tip" tabindex="0" data-tooltip="数据功能分类：ILF 是系统维护的内部逻辑文件，EIF 是系统引用但不维护的外部接口文件。">数据类型</span>
                   <select id="fp-data-type">
-                    <option value="ILF">ILF</option>
-                    <option value="EIF">EIF</option>
+                    <option value="ILF" title="Internal Logical File，系统内部维护的业务数据。">ILF</option>
+                    <option value="EIF" title="External Interface File，系统引用但不维护的外部数据。">EIF</option>
                   </select>
                 </label>
-                <label class="field">数据 RET<input id="fp-data-ret" type="number" min="0" value="0" /></label>
-                <label class="field">数据 DET<input id="fp-data-det" type="number" min="0" value="0" /></label>
+                <label class="field"><span class="metric-tip" tabindex="0" data-tooltip="RET 是数据功能中的记录元素类型数量，用于判断 ILF/EIF 的复杂度。">数据 RET</span><input id="fp-data-ret" type="number" min="0" value="0" /></label>
+                <label class="field"><span class="metric-tip" tabindex="0" data-tooltip="DET 是数据功能中的数据元素类型数量，用于判断 ILF/EIF 的复杂度。">数据 DET</span><input id="fp-data-det" type="number" min="0" value="0" /></label>
               </div>
               <div class="row">
                 <button class="btn secondary" id="fp-add-data">添加数据功能</button>
               </div>
 
               <div class="grid-3" style="margin-top:10px;">
-                <label class="field">VAF(0.65~1.35)<input id="fp-vaf" type="number" step="0.01" min="0.65" max="1.35" value="1.00" /></label>
+                <label class="field"><span class="metric-tip" tabindex="0" data-tooltip="VAF 是价值调整因子，用于把未调整功能点 UFP 修正为最终功能点 FP。">VAF(0.65~1.35)</span><input id="fp-vaf" type="number" step="0.01" min="0.65" max="1.35" value="1.00" /></label>
               </div>
               <div class="row">
                 <button class="btn primary" id="fp-calc">计算功能点</button>
@@ -1600,14 +1700,14 @@
           <div id="tab-uc" class="tab-pane hidden">
             <div class="panel-body">
               <div class="grid-3">
-                <label class="field">简单参与者<input id="uc-as" type="number" min="0" value="0" /></label>
-                <label class="field">一般参与者<input id="uc-aa" type="number" min="0" value="0" /></label>
-                <label class="field">复杂参与者<input id="uc-ac" type="number" min="0" value="0" /></label>
-                <label class="field">简单用例<input id="uc-us" type="number" min="0" value="0" /></label>
-                <label class="field">一般用例<input id="uc-ua" type="number" min="0" value="0" /></label>
-                <label class="field">复杂用例<input id="uc-uc" type="number" min="0" value="0" /></label>
-                <label class="field">TFactor<input id="uc-tfactor" type="number" step="1" min="0" max="50" value="0" /></label>
-                <label class="field">EFactor<input id="uc-efactor" type="number" step="1" min="0" max="50" value="0" /></label>
+                <label class="field"><span class="metric-tip" tabindex="0" data-tooltip="简单参与者通常通过简单接口与系统交互，权重为 1。">简单参与者</span><input id="uc-as" type="number" min="0" value="0" /></label>
+                <label class="field"><span class="metric-tip" tabindex="0" data-tooltip="一般参与者交互方式或接口复杂度中等，权重为 2。">一般参与者</span><input id="uc-aa" type="number" min="0" value="0" /></label>
+                <label class="field"><span class="metric-tip" tabindex="0" data-tooltip="复杂参与者交互方式复杂或涉及外部系统集成，权重为 3。">复杂参与者</span><input id="uc-ac" type="number" min="0" value="0" /></label>
+                <label class="field"><span class="metric-tip" tabindex="0" data-tooltip="简单用例业务步骤少、分支少，权重为 5。">简单用例</span><input id="uc-us" type="number" min="0" value="0" /></label>
+                <label class="field"><span class="metric-tip" tabindex="0" data-tooltip="一般用例业务步骤和分支复杂度中等，权重为 10。">一般用例</span><input id="uc-ua" type="number" min="0" value="0" /></label>
+                <label class="field"><span class="metric-tip" tabindex="0" data-tooltip="复杂用例业务步骤多、分支多或规则复杂，权重为 15。">复杂用例</span><input id="uc-uc" type="number" min="0" value="0" /></label>
+                <label class="field"><span class="metric-tip" tabindex="0" data-tooltip="技术复杂度因子总分，用于计算技术复杂度修正系数 TCF。">TFactor</span><input id="uc-tfactor" type="number" step="1" min="0" max="50" value="0" /></label>
+                <label class="field"><span class="metric-tip" tabindex="0" data-tooltip="环境复杂度因子总分，用于计算环境修正系数 EF。">EFactor</span><input id="uc-efactor" type="number" step="1" min="0" max="50" value="0" /></label>
               </div>
               <div class="row">
                 <button class="btn primary" id="uc-calc">计算用例点</button>
@@ -1659,6 +1759,22 @@
               <div class="status" id="loc-status"></div>
             </div>
           </div>
+
+          <div id="tab-ai" class="tab-pane hidden">
+            <div class="panel-body">
+              <div class="hint">
+                智能分析会把当前数据源的摘要、风险类、复杂方法、类图/顺序图结构和你的关注点发送给本地后端，由后端调用硅基流动 API。
+              </div>
+              <label class="field">分析关注点
+                <textarea id="ai-input" placeholder="例如：请重点分析这个类图是否职责清晰、耦合是否过高、顺序图交互是否复杂，并给出改进建议。"></textarea>
+              </label>
+              <div class="row">
+                <button class="btn primary" id="ai-run">开始智能分析</button>
+              </div>
+              <div class="status" id="ai-status"></div>
+              <div class="analysis-result" id="ai-result"></div>
+            </div>
+          </div>
         </article>
 
         <article class="panel right-panel">
@@ -1677,6 +1793,6 @@
     </main>
   </div>
 
-  <script src="./main.js?v=20260427-1"></script>
+  <script src="./main.js?v=20260428-ai"></script>
 </body>
 </html>

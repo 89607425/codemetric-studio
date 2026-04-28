@@ -17,7 +17,9 @@ const state = {
 const METRIC_AXES = ['WMC', 'DIT', 'NOC', 'CBO', 'RFC', 'LCOM'];
 const COLORS = ['#123FBD', '#5D8FE8', '#2F3A56', '#D60000', '#7EADEB', '#13A86B', '#D97706', '#6B7A90', '#9FB7D8', '#0B43C7', '#94A3B8', '#B42318'];
 const BUILTIN_TYPES = new Set(['void', 'boolean', 'byte', 'short', 'int', 'long', 'float', 'double', 'char', 'string', 'integer', 'object', 'list', 'map', 'set', 'date', 'datetime', 'money']);
-const ANALYZE_API_URL = 'http://127.0.0.1:9090/api/analyze-project';
+const API_BASE_URL = location.port === '9090' ? '' : `${location.protocol}//${location.hostname || '127.0.0.1'}:9090`;
+const ANALYZE_API_URL = `${API_BASE_URL}/api/analyze-project`;
+const AI_ANALYSIS_API_URL = `${API_BASE_URL}/api/ai-analysis`;
 
 const TAB_TITLE = {
   fp: '功能点度量',
@@ -25,6 +27,7 @@ const TAB_TITLE = {
   oo: '面向对象度量总览',
   cfg: '控制流图度量',
   loc: '代码行度量',
+  ai: '智能分析',
 };
 
 const TAB_DESC = {
@@ -33,6 +36,7 @@ const TAB_DESC = {
   oo: '面向对象度量既可展示 metrics.json 结果，也可直接从类图 .oom 中抽取类、属性、操作和关系做近似度量。',
   cfg: '控制流图度量支持代码文本统计，也支持从 metrics.json 方法复杂度或顺序图 .oom 的交互消息中自动估算。',
   loc: '代码行度量支持粘贴代码统计，也支持读取当前加载的数据源，包括类图、用例图和顺序图的结构规模。',
+  ai: '智能分析会调用本地后端代理的硅基流动 API，结合用户关注点、当前指标和图结构评估设计质量。',
 };
 
 const TAB_BADGES = {
@@ -41,6 +45,39 @@ const TAB_BADGES = {
   oo: ['类图雷达图', '类级明细表', '支持导出 XML'],
   cfg: ['代码决策点统计', '方法 CC 自动读取', '顺序图消息估算'],
   loc: ['总代码量统计', '注释/空行拆分', '设计图规模读取'],
+  ai: ['硅基流动 API', '上下文指标汇总', '设计质量建议'],
+};
+
+const METRIC_TOOLTIPS = {
+  '事务类型': '事务功能分类：EI 表示外部输入，EO 表示外部输出，EQ 表示外部查询。',
+  '事务 FTR': 'FTR 是事务功能引用的数据文件类型数量，用于判断 EI/EO/EQ 的复杂度。',
+  '事务 DER': 'DER 是事务涉及的数据元素数量，用于判断 EI/EO/EQ 的复杂度。',
+  '数据类型': '数据功能分类：ILF 是系统维护的内部逻辑文件，EIF 是系统引用但不维护的外部接口文件。',
+  '数据 RET': 'RET 是数据功能中的记录元素类型数量，用于判断 ILF/EIF 的复杂度。',
+  '数据 DET': 'DET 是数据功能中的数据元素类型数量，用于判断 ILF/EIF 的复杂度。',
+  'VAF(0.65~1.35)': 'VAF 是价值调整因子，用于把未调整功能点 UFP 修正为最终功能点 FP。',
+  UFP: 'Unadjusted Function Point，未调整功能点，由 EI/EO/EQ/ILF/EIF 的数量和复杂度加权得到。',
+  VAF: 'Value Adjustment Factor，功能点调整因子，通常范围为 0.65 到 1.35。',
+  '调整后 FP': '调整后功能点，计算公式为 UFP × VAF，用于表示修正后的功能规模。',
+  'EI 低/中/高': 'EI 是 External Input，外部输入，例如新增、修改、删除等把数据送入系统的事务。',
+  'EO 低/中/高': 'EO 是 External Output，外部输出，例如报表、统计、通知等从系统输出结果的事务。',
+  'EQ 低/中/高': 'EQ 是 External Inquiry，外部查询，通常包含查询请求和查询结果，不维护内部数据。',
+  'ILF 低/中/高': 'ILF 是 Internal Logical File，系统内部维护的核心业务数据。',
+  'EIF 低/中/高': 'EIF 是 External Interface File，系统引用但不维护的外部数据。',
+  '简单参与者': '简单参与者通常通过简单接口与系统交互，权重为 1。',
+  '一般参与者': '一般参与者交互方式或接口复杂度中等，权重为 2。',
+  '复杂参与者': '复杂参与者交互方式复杂或涉及外部系统集成，权重为 3。',
+  '简单用例': '简单用例业务步骤少、分支少，权重为 5。',
+  '一般用例': '一般用例业务步骤和分支复杂度中等，权重为 10。',
+  '复杂用例': '复杂用例业务步骤多、分支多或规则复杂，权重为 15。',
+  TFactor: '技术复杂度因子总分，用于计算技术复杂度修正系数 TCF。',
+  EFactor: '环境复杂度因子总分，用于计算环境修正系数 EF。',
+  UAW: 'Unadjusted Actor Weight，未调整参与者权重，由简单/一般/复杂参与者加权得到。',
+  UUC: 'Unadjusted Use Case Weight，未调整用例权重，由简单/一般/复杂用例加权得到。',
+  UUCP: 'Unadjusted Use Case Points，未调整用例点，计算公式为 UAW + UUC。',
+  TCF: 'Technical Complexity Factor，技术复杂度修正系数，当前按 0.6 + 0.01 × TFactor 计算。',
+  EF: 'Environmental Factor，环境修正系数，当前按 1.4 - 0.03 × EFactor 计算。',
+  UPC: 'Use Case Points，修正后的用例点，计算公式为 UUCP × TCF × EF。',
 };
 
 function byId(id) {
@@ -63,6 +100,59 @@ function escapeHtml(text) {
     .replace(/'/g, '&#39;');
 }
 
+function markdownToHtml(markdown) {
+  const lines = String(markdown || '').split(/\r?\n/);
+  const html = [];
+  let listOpen = false;
+
+  lines.forEach((rawLine) => {
+    const line = rawLine.trim();
+    if (!line) {
+      if (listOpen) {
+        html.push('</ul>');
+        listOpen = false;
+      }
+      return;
+    }
+
+    const bullet = line.match(/^[-*]\s+(.+)$/);
+    if (bullet) {
+      if (!listOpen) {
+        html.push('<ul>');
+        listOpen = true;
+      }
+      html.push(`<li>${inlineMarkdownToHtml(bullet[1])}</li>`);
+      return;
+    }
+
+    if (listOpen) {
+      html.push('</ul>');
+      listOpen = false;
+    }
+
+    const heading = line.match(/^(#{1,3})\s+(.+)$/);
+    if (heading) {
+      const level = heading[1].length + 2;
+      html.push(`<h${level}>${inlineMarkdownToHtml(heading[2])}</h${level}>`);
+      return;
+    }
+
+    html.push(`<p>${inlineMarkdownToHtml(line)}</p>`);
+  });
+
+  if (listOpen) {
+    html.push('</ul>');
+  }
+
+  return html.join('');
+}
+
+function inlineMarkdownToHtml(text) {
+  return escapeHtml(text)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>');
+}
+
 function num(id) {
   const value = Number(byId(id)?.value);
   return Number.isFinite(value) ? value : 0;
@@ -73,9 +163,16 @@ function ensureNumber(value, fallback = 0) {
   return Number.isFinite(result) ? result : fallback;
 }
 
+function metricTipHtml(label) {
+  const text = String(label);
+  const tooltip = METRIC_TOOLTIPS[text];
+  if (!tooltip) return escapeHtml(text);
+  return `<span class="metric-tip" tabindex="0" data-tooltip="${escapeHtml(tooltip)}">${escapeHtml(text)}</span>`;
+}
+
 function renderCards(hostId, entries) {
   byId(hostId).innerHTML = entries.map(([k, v]) => `
-    <div class="card"><div class="k">${escapeHtml(k)}</div><div class="v">${escapeHtml(v)}</div></div>
+    <div class="card"><div class="k">${metricTipHtml(k)}</div><div class="v">${escapeHtml(v)}</div></div>
   `).join('');
 }
 
@@ -153,22 +250,6 @@ function metricHeader(label) {
     : `<th>${escapeHtml(label)}</th>`;
 }
 
-function buildGlossaryHtml() {
-  return `
-    <div class="hint" id="metricGlossary">
-      <strong>指标注释</strong><br>
-      EI: External Input，外部输入，表示新增、修改、删除这类把数据送入系统的事务。<br>
-      EO: External Output，外部输出，表示报表、统计、通知这类从系统输出结果的事务。<br>
-      EQ: External Inquiry，外部查询，表示查询请求与查询结果，通常不维护内部数据。<br>
-      ILF: Internal Logical File，内部逻辑文件，表示系统自己维护的核心业务数据。<br>
-      EIF: External Interface File，外部接口文件，表示系统只读取、不维护的外部数据。<br>
-      FTR: File Type Referenced，事务功能引用的数据文件数。DER: Data Element Referenced，事务涉及的数据元素数。<br>
-      RET: Record Element Type，数据功能里的记录组数。DET: Data Element Type，数据元素数。<br>
-      VAF: Value Adjustment Factor，功能点调整因子。TFactor / EFactor 分别是技术因子和环境因子。
-    </div>
-  `;
-}
-
 function describeCapabilities(data) {
   if (!data) {
     return `
@@ -217,25 +298,10 @@ function describeCapabilities(data) {
 }
 
 function ensureInfoBlocks() {
-  const fpBody = byId('tab-fp')?.querySelector('.panel-body');
-  const ucBody = byId('tab-uc')?.querySelector('.panel-body');
   const ooHost = byId('tab-oo')?.querySelector('.chart-wrap');
   const cfgBody = byId('tab-cfg')?.querySelector('.panel-body');
   const locBody = byId('tab-loc')?.querySelector('.panel-body');
 
-  if (fpBody && !byId('fpGlossary')) {
-    fpBody.insertAdjacentHTML('afterbegin', `<div id="fpGlossary">${buildGlossaryHtml()}</div>`);
-  }
-  if (ucBody && !byId('ucGuide')) {
-    ucBody.insertAdjacentHTML('afterbegin', `
-      <div class="hint" id="ucGuide">
-        <strong>用例点说明</strong><br>
-        简单/一般/复杂参与者：通常按交互方式和接口复杂度划分。<br>
-        简单/一般/复杂用例：通常按交易步数、分支数、业务复杂度划分。<br>
-        TFactor: 技术复杂度因子。EFactor: 环境复杂度因子。UPC: 修正后的用例点结果。
-      </div>
-    `);
-  }
   if (cfgBody && !byId('cfgGuide')) {
     cfgBody.insertAdjacentHTML('afterbegin', `
       <div class="hint" id="cfgGuide">
@@ -609,6 +675,137 @@ function parseOomFile(text, sourceName) {
   if (kind === 'usecase') return parseUseCaseDiagram(xmlDoc, sourceName);
   if (kind === 'sequence') return parseSequenceDiagram(xmlDoc, sourceName);
   throw new Error('暂不支持识别该 OOM 图类型');
+}
+
+function buildAiAnalysisContext() {
+  const data = state.raw || {};
+  const classes = Array.isArray(data.classes) ? data.classes : [];
+  const methods = Array.isArray(data.methods) ? data.methods : [];
+  const alerts = Array.isArray(data.alerts) ? data.alerts : [];
+  const topRiskClasses = [...state.rows]
+    .sort((a, b) => b.risk - a.risk)
+    .slice(0, 10)
+    .map((row) => ({
+      className: row.name,
+      wmc: row.wmc,
+      dit: row.dit,
+      noc: row.noc,
+      cbo: row.cbo,
+      rfc: row.rfc,
+      lcom: row.lcom,
+      moa: row.moa,
+      mfa: row.mfa,
+      cam: row.cam,
+      riskScore: row.risk,
+    }));
+  const highComplexMethods = [...methods]
+    .sort((a, b) => ensureNumber(b.cyclomaticComplexity, 1) - ensureNumber(a.cyclomaticComplexity, 1))
+    .slice(0, 10)
+    .map((method) => ({
+      className: method.className,
+      methodName: method.methodName,
+      cyclomaticComplexity: ensureNumber(method.cyclomaticComplexity, 1),
+      loc: ensureNumber(method.loc),
+    }));
+
+  return {
+    sourceName: state.sourceName,
+    inputType: data.inputType || 'metrics-json',
+    projectName: data.projectName || '',
+    summary: {
+      fileCount: ensureNumber(data.fileCount),
+      classCount: ensureNumber(data.classCount),
+      methodCount: ensureNumber(data.methodCount),
+      loc: data.loc || {},
+      alertCount: alerts.length,
+      averageWmc: average(classes, 'wmc'),
+      averageCbo: average(classes, 'cbo'),
+      averageDit: average(classes, 'dit'),
+      averageLcom: average(classes, 'lcom'),
+      averageCyclomaticComplexity: average(methods, 'cyclomaticComplexity', 1),
+    },
+    classDiagram: data.classDiagram || null,
+    useCaseDiagram: data.useCaseDiagram ? {
+      actorCount: data.useCaseDiagram.actors?.length || 0,
+      useCaseCount: data.useCaseDiagram.useCases?.length || 0,
+      associations: data.useCaseDiagram.associations,
+      actorSimple: data.useCaseDiagram.actorSimple,
+      actorAverage: data.useCaseDiagram.actorAverage,
+      actorComplex: data.useCaseDiagram.actorComplex,
+      useCaseSimple: data.useCaseDiagram.useCaseSimple,
+      useCaseAverage: data.useCaseDiagram.useCaseAverage,
+      useCaseComplex: data.useCaseDiagram.useCaseComplex,
+    } : null,
+    sequenceDiagram: data.sequenceDiagram ? {
+      participantCount: data.sequenceDiagram.participants?.length || 0,
+      messageCount: data.sequenceDiagram.messages?.length || 0,
+      fragments: data.sequenceDiagram.fragments,
+      loopCount: data.sequenceDiagram.loopCount,
+      returnCount: data.sequenceDiagram.returnCount,
+      createCount: data.sequenceDiagram.createCount,
+      cfgComplexity: data.sequenceDiagram.cfgComplexity,
+      sampleMessages: (data.sequenceDiagram.messages || []).slice(0, 20),
+    } : null,
+    topRiskClasses,
+    highComplexMethods,
+    alerts: alerts.slice(0, 12),
+  };
+}
+
+function average(items, field, fallback = 0) {
+  if (!items.length) return 0;
+  const total = items.reduce((sum, item) => sum + ensureNumber(item[field], fallback), 0);
+  return +(total / items.length).toFixed(2);
+}
+
+async function runAiAnalysis() {
+  const statusId = 'ai-status';
+  const result = byId('ai-result');
+  if (!state.raw) {
+    setStatus(statusId, '请先上传 metrics.json、.oom 文件，或分析 Java 项目后再进行智能分析。', true);
+    return;
+  }
+
+  const userInput = byId('ai-input')?.value || '';
+  const button = byId('ai-run');
+  if (button) button.disabled = true;
+  if (result) {
+    result.innerHTML = '<div class="hint">正在生成分析结果...</div>';
+  };
+
+  try {
+    const response = await fetch(AI_ANALYSIS_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userInput,
+        context: buildAiAnalysisContext(),
+      }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error('当前 9090 端口上的后端不是最新版本，缺少 /api/ai-analysis 接口，请重启后端服务');
+      }
+      throw new Error(data.error || `接口调用失败（HTTP ${response.status}）`);
+    }
+    if (result) {
+      result.innerHTML = markdownToHtml(data.content || '');
+    }
+    setStatus(statusId, `智能分析完成，模型：${data.model || 'SiliconFlow'}`);
+  } catch (err) {
+    if (result) {
+      result.innerHTML = '';
+    }
+    const message = err instanceof TypeError
+      ? '无法连接 http://127.0.0.1:9090/api/ai-analysis，请先启动或重启本地后端服务'
+      : err.message;
+    setStatus(statusId, `智能分析失败：${message}。`, true);
+  } finally {
+    if (button) button.disabled = false;
+  }
 }
 
 function switchTab(tabKey) {
@@ -1437,6 +1634,7 @@ function bindEvents() {
   byId('cfg-class-select').addEventListener('change', onCfgClassChange);
   byId('loc-calc').addEventListener('click', calcLocFromInput);
   byId('loc-use-project').addEventListener('click', useProjectLoc);
+  byId('ai-run')?.addEventListener('click', runAiAnalysis);
 
   window.addEventListener('resize', () => {
     if (state.activeTab === 'oo' && state.rows.length) renderRadar();

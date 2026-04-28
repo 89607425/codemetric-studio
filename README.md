@@ -300,21 +300,27 @@ mvn exec:java "-Dexec.args=analyze --path bad-uml-sample --out out --format all 
 
 ## 4.4 启动前端静态页面
 
-在项目根目录执行：
+推荐直接启动 Java 本地服务，它会同时提供前端页面和 API：
 
 ```bash
-python -m http.server 8080
+mvn exec:java "-Dexec.args=serve --port 9090"
 ```
 
 然后访问：
 
 ```text
-http://localhost:8080/web/
+http://127.0.0.1:9090/web/
+```
+
+如果本机没有 Maven，也可以使用仓库内的本地启动脚本：
+
+```bash
+sh scripts/serve-local.sh 9090
 ```
 
 ## 4.5 启动前端上传 Java 项目所需的本地分析接口
 
-如果你要在前端直接上传整个 Java 项目文件夹，需要先启动这个本地接口：
+如果你已经按 4.4 启动了 Java 本地服务，就不需要再启动第二个服务。前端上传 Java 项目和“智能分析”都会复用同一个端口。
 
 ```bash
 mvn exec:java "-Dexec.args=serve --port 9090"
@@ -326,12 +332,28 @@ mvn exec:java "-Dexec.args=serve --port 9090"
 http://127.0.0.1:9090/api/analyze-project
 ```
 
+智能分析会调用：
+
+```text
+http://127.0.0.1:9090/api/ai-analysis
+```
+
+如需使用硅基流动智能分析，请先在当前终端设置环境变量，再启动本地接口：
+
+```bash
+export SILICONFLOW_API_KEY="<你的硅基流动 API Key>"
+# 可选：覆盖默认模型
+export SILICONFLOW_MODEL="deepseek-ai/DeepSeek-V3.1-Terminus"
+mvn exec:java "-Dexec.args=serve --port 9090"
+```
+
 说明：
 
 - 这个接口只在本机使用
 - 前端上传 Java 项目时会把 `.java` 文件内容发给它
 - 它会在临时目录中分析，再把 JSON 结果返回给前端
 - 默认不会把结果持久化保存到 `out/metrics.json`
+- 智能分析通过本地后端代理调用硅基流动，避免把 API Key 暴露在浏览器代码中
 
 ---
 
