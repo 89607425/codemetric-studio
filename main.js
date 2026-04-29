@@ -7,10 +7,6 @@ const state = {
   activeTab: 'oo',
   ooView: 'table', // table | bar
   ooChartMetric: 'wmc',
-  smView: 'table', // table | bar
-  smChartMetric: 'nop',
-  dmView: 'table', // table | bar
-  dmChartMetric: 'overrideRatio',
   fpCounts: {
     EI: { low: 0, avg: 0, high: 0 },
     EO: { low: 0, avg: 0, high: 0 },
@@ -21,11 +17,7 @@ const state = {
 };
 
 const METRIC_AXES = ['WMC', 'DIT', 'NOC', 'CBO', 'RFC', 'LCOM'];
-const SM_METRIC_AXES = ['NOP', 'NOM', 'NOO', 'POD'];
-const DM_METRIC_AXES = ['overrideRatio', 'overloadRatio', 'DAC', 'MOA', 'CAM', 'CIS', 'SK'];
 const COLORS = ['#123FBD', '#5D8FE8', '#2F3A56', '#D60000', '#7EADEB', '#13A86B', '#D97706', '#6B7A90', '#9FB7D8', '#0B43C7', '#94A3B8', '#B42318'];
-const SM_COLORS = ['#2bd9fe', '#40f4b6', '#ffd166', '#ff9a3d'];
-const DM_COLORS = ['#a78bfa', '#f472b6', '#60a5fa', '#34d399', '#fbbf24', '#f87171', '#c084fc'];
 const BUILTIN_TYPES = new Set(['void', 'boolean', 'byte', 'short', 'int', 'long', 'float', 'double', 'char', 'string', 'integer', 'object', 'list', 'map', 'set', 'date', 'datetime', 'money']);
 const API_BASE_URL = location.port === '9090' ? '' : `${location.protocol}//${location.hostname || '127.0.0.1'}:9090`;
 const ANALYZE_API_URL = `${API_BASE_URL}/api/analyze-project`;
@@ -35,8 +27,6 @@ const TAB_TITLE = {
   fp: '功能点度量',
   uc: '用例图度量',
   oo: '面向对象度量总览',
-  sm: '规模度量',
-  dm: '拓展指标检查',
   cfg: '控制流图度量',
   loc: '代码行度量',
   ai: '智能分析',
@@ -46,8 +36,6 @@ const TAB_DESC = {
   fp: '功能点度量用于估算软件功能规模，支持基于结构数据自动估算，也支持手工录入事务功能和数据功能。',
   uc: '用例图度量支持手工输入，也支持直接上传 .oom 用例图并自动估算参与者、用例与修正因子。',
   oo: '面向对象度量既可展示 metrics.json 结果，也可直接从类图 .oom 中抽取类、属性、操作和关系做近似度量。',
-  sm: '规模度量展示类的规模相关指标，包括 NOP、NOM、NOO、POD 等，反映类的规模大小和方法复杂度。',
-  dm: '拓展指标检查展示类的设计质量指标，包括 overrideRatio、overloadRatio、DAC、MOA、CAM、CIS、SK 等，反映类的设计合理性和耦合度。',
   cfg: '控制流图度量支持代码文本统计，也支持从 metrics.json 方法复杂度或顺序图 .oom 的交互消息中自动估算。',
   loc: '代码行度量支持粘贴代码统计，也支持读取当前加载的数据源，包括类图、用例图和顺序图的结构规模。',
   ai: '智能分析会调用本地后端代理的硅基流动 API，结合用户关注点、当前指标和图结构评估设计质量。',
@@ -57,8 +45,6 @@ const TAB_BADGES = {
   fp: ['FTR/DER 自动判级', 'RET/DET 自动判级', '支持 metrics 与 .oom'],
   uc: ['UAW/UUC/UUCP 计算', '可直接读取用例图 .oom', '支持人工修正'],
   oo: ['类图雷达图', '类级明细表', '支持导出 XML'],
-  sm: ['多态性雷达图', 'NOP/NOM/NOO/POD', '多态特性分析'],
-  dm: ['设计质量雷达图', 'DAC/MOA/CAM/CIS', '耦合度分析'],
   cfg: ['代码决策点统计', '方法 CC 自动读取', '顺序图消息估算'],
   loc: ['总代码量统计', '注释/空行拆分', '设计图规模读取'],
   ai: ['硅基流动 API', '上下文指标汇总', '设计质量建议'],
@@ -1149,18 +1135,6 @@ function switchTab(tabKey) {
     renderTable();
     syncOoTableOrChart();
   }
-  if (tabKey === 'sm') {
-    renderSMLegend();
-    renderSizeMetricsRadar();
-    renderSmTable();
-    syncSmTableOrChart();
-  }
-  if (tabKey === 'dm') {
-    renderDMLegend();
-    renderDesignMetricsRadar();
-    renderDmTable();
-    syncDmTableOrChart();
-  }
   if (tabKey === 'cfg') {
     populateCfgSelectors();
   }
@@ -1231,17 +1205,6 @@ function valueForAxis(row, axis) {
   if (axis === 'CBO') return row.cbo;
   if (axis === 'RFC') return row.rfc;
   if (axis === 'LCOM') return row.lcom;
-  if (axis === 'NOP') return row.nop;
-  if (axis === 'NOM') return row.nom;
-  if (axis === 'NOO') return row.noo;
-  if (axis === 'POD') return row.pod;
-  if (axis === 'overrideRatio') return row.overrideRatio;
-  if (axis === 'overloadRatio') return row.overloadRatio;
-  if (axis === 'DAC') return row.dac;
-  if (axis === 'MOA') return row.moa;
-  if (axis === 'CAM') return row.cam;
-  if (axis === 'CIS') return row.cis;
-  if (axis === 'SK') return row.sk;
   return 0;
 }
 
@@ -1268,50 +1231,6 @@ function renderLegend() {
       renderLegend();
       renderTable();
       renderRadar();
-    });
-  });
-}
-
-function renderSMLegend() {
-  const host = byId('smLegend');
-  if (!host) return;
-  const items = getTopRows();
-  host.innerHTML = items.map((row, index) => {
-    const dim = state.selectedClass && state.selectedClass !== row.name ? 'dim' : '';
-    return `<button class="legend-item ${dim}" data-class="${escapeHtml(row.name)}">
-      <span class="legend-dot" style="background:${SM_COLORS[index % SM_COLORS.length]}"></span>
-      ${escapeHtml(row.name.split('.').pop())}
-    </button>`;
-  }).join('');
-
-  host.querySelectorAll('.legend-item').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const className = btn.dataset.class;
-      state.selectedClass = state.selectedClass === className ? null : className;
-      renderSMLegend();
-      renderSizeMetricsRadar();
-    });
-  });
-}
-
-function renderDMLegend() {
-  const host = byId('dmLegend');
-  if (!host) return;
-  const items = getTopRows();
-  host.innerHTML = items.map((row, index) => {
-    const dim = state.selectedClass && state.selectedClass !== row.name ? 'dim' : '';
-    return `<button class="legend-item ${dim}" data-class="${escapeHtml(row.name)}">
-      <span class="legend-dot" style="background:${DM_COLORS[index % DM_COLORS.length]}"></span>
-      ${escapeHtml(row.name.split('.').pop())}
-    </button>`;
-  }).join('');
-
-  host.querySelectorAll('.legend-item').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const className = btn.dataset.class;
-      state.selectedClass = state.selectedClass === className ? null : className;
-      renderDMLegend();
-      renderDesignMetricsRadar();
     });
   });
 }
@@ -1410,196 +1329,6 @@ function renderRadar() {
   host.appendChild(svg);
 }
 
-function renderSizeMetricsRadar() {
-  const host = byId('smRadarHost');
-  if (!host) return;
-  host.innerHTML = '';
-
-  const rows = getTopRows();
-  if (!rows.length) {
-    host.innerHTML = '<div style="padding:16px;color:#52647d;">暂无可展示的类图/面向对象数据。</div>';
-    return;
-  }
-
-  const width = host.clientWidth || 860;
-  const height = host.clientHeight || 520;
-  const cx = width / 2;
-  const cy = height / 2 + 10;
-  const radius = Math.min(width, height) * 0.33;
-  const maxByAxis = {};
-  SM_METRIC_AXES.forEach((axis) => {
-    maxByAxis[axis] = Math.max(...rows.map((row) => valueForAxis(row, axis)), 1);
-  });
-
-  const svgNS = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(svgNS, 'svg');
-  svg.setAttribute('width', String(width));
-  svg.setAttribute('height', String(height));
-
-  for (let level = 1; level <= 5; level += 1) {
-    const points = SM_METRIC_AXES.map((_, index) => {
-      const angle = -Math.PI / 2 + (2 * Math.PI * index) / SM_METRIC_AXES.length;
-      return polarToCartesian(cx, cy, (radius * level) / 5, angle);
-    });
-    const polygon = document.createElementNS(svgNS, 'polygon');
-    polygon.setAttribute('points', points.map((p) => `${p.x},${p.y}`).join(' '));
-    polygon.setAttribute('fill', level % 2 === 0 ? 'rgba(43,217,254,0.08)' : 'rgba(43,217,254,0.03)');
-    polygon.setAttribute('stroke', '#2b4c74');
-    polygon.setAttribute('stroke-width', '1');
-    svg.appendChild(polygon);
-  }
-
-  SM_METRIC_AXES.forEach((axis, index) => {
-    const angle = -Math.PI / 2 + (2 * Math.PI * index) / SM_METRIC_AXES.length;
-    const point = polarToCartesian(cx, cy, radius, angle);
-    const label = polarToCartesian(cx, cy, radius + 18, angle);
-    const line = document.createElementNS(svgNS, 'line');
-    line.setAttribute('x1', String(cx));
-    line.setAttribute('y1', String(cy));
-    line.setAttribute('x2', String(point.x));
-    line.setAttribute('y2', String(point.y));
-    line.setAttribute('stroke', '#2b4c74');
-    line.setAttribute('stroke-width', '1');
-    svg.appendChild(line);
-
-    const text = document.createElementNS(svgNS, 'text');
-    text.setAttribute('x', String(label.x));
-    text.setAttribute('y', String(label.y));
-    text.setAttribute('text-anchor', 'middle');
-    text.setAttribute('font-size', '13');
-    text.setAttribute('fill', '#8db0d6');
-    text.textContent = axis;
-    svg.appendChild(text);
-  });
-
-  rows.forEach((row, index) => {
-    const color = SM_COLORS[index % SM_COLORS.length];
-    const isDim = state.selectedClass && state.selectedClass !== row.name;
-    const points = SM_METRIC_AXES.map((axis, axisIndex) => {
-      const angle = -Math.PI / 2 + (2 * Math.PI * axisIndex) / SM_METRIC_AXES.length;
-      const ratio = valueForAxis(row, axis) / maxByAxis[axis];
-      return polarToCartesian(cx, cy, radius * ratio, angle);
-    });
-
-    const polygon = document.createElementNS(svgNS, 'polygon');
-    polygon.setAttribute('points', points.map((p) => `${p.x},${p.y}`).join(' '));
-    polygon.setAttribute('fill', color);
-    polygon.setAttribute('fill-opacity', isDim ? '0.03' : '0.08');
-    polygon.setAttribute('stroke', color);
-    polygon.setAttribute('stroke-width', state.selectedClass === row.name ? '3' : '2');
-    polygon.setAttribute('stroke-opacity', isDim ? '0.2' : '0.9');
-    svg.appendChild(polygon);
-
-    points.forEach((point) => {
-      const dot = document.createElementNS(svgNS, 'circle');
-      dot.setAttribute('cx', String(point.x));
-      dot.setAttribute('cy', String(point.y));
-      dot.setAttribute('r', state.selectedClass === row.name ? '4.2' : '3.2');
-      dot.setAttribute('fill', color);
-      dot.setAttribute('fill-opacity', isDim ? '0.25' : '0.95');
-      svg.appendChild(dot);
-    });
-  });
-
-  host.appendChild(svg);
-  setStatus('smStatus', `已渲染 ${rows.length} 个类的规模度量雷达图。`);
-}
-
-function renderDesignMetricsRadar() {
-  const host = byId('dmRadarHost');
-  if (!host) return;
-  host.innerHTML = '';
-
-  const rows = getTopRows();
-  if (!rows.length) {
-    host.innerHTML = '<div style="padding:16px;color:#52647d;">暂无可展示的类图/面向对象数据。</div>';
-    return;
-  }
-
-  const width = host.clientWidth || 860;
-  const height = host.clientHeight || 520;
-  const cx = width / 2;
-  const cy = height / 2 + 10;
-  const radius = Math.min(width, height) * 0.33;
-  const maxByAxis = {};
-  DM_METRIC_AXES.forEach((axis) => {
-    maxByAxis[axis] = Math.max(...rows.map((row) => valueForAxis(row, axis)), 1);
-  });
-
-  const svgNS = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(svgNS, 'svg');
-  svg.setAttribute('width', String(width));
-  svg.setAttribute('height', String(height));
-
-  for (let level = 1; level <= 5; level += 1) {
-    const points = DM_METRIC_AXES.map((_, index) => {
-      const angle = -Math.PI / 2 + (2 * Math.PI * index) / DM_METRIC_AXES.length;
-      return polarToCartesian(cx, cy, (radius * level) / 5, angle);
-    });
-    const polygon = document.createElementNS(svgNS, 'polygon');
-    polygon.setAttribute('points', points.map((p) => `${p.x},${p.y}`).join(' '));
-    polygon.setAttribute('fill', level % 2 === 0 ? 'rgba(167,139,250,0.08)' : 'rgba(167,139,250,0.03)');
-    polygon.setAttribute('stroke', '#2b4c74');
-    polygon.setAttribute('stroke-width', '1');
-    svg.appendChild(polygon);
-  }
-
-  DM_METRIC_AXES.forEach((axis, index) => {
-    const angle = -Math.PI / 2 + (2 * Math.PI * index) / DM_METRIC_AXES.length;
-    const point = polarToCartesian(cx, cy, radius, angle);
-    const label = polarToCartesian(cx, cy, radius + 18, angle);
-    const line = document.createElementNS(svgNS, 'line');
-    line.setAttribute('x1', String(cx));
-    line.setAttribute('y1', String(cy));
-    line.setAttribute('x2', String(point.x));
-    line.setAttribute('y2', String(point.y));
-    line.setAttribute('stroke', '#2b4c74');
-    line.setAttribute('stroke-width', '1');
-    svg.appendChild(line);
-
-    const text = document.createElementNS(svgNS, 'text');
-    text.setAttribute('x', String(label.x));
-    text.setAttribute('y', String(label.y));
-    text.setAttribute('text-anchor', 'middle');
-    text.setAttribute('font-size', '12');
-    text.setAttribute('fill', '#8db0d6');
-    text.textContent = axis;
-    svg.appendChild(text);
-  });
-
-  rows.forEach((row, index) => {
-    const color = DM_COLORS[index % DM_COLORS.length];
-    const isDim = state.selectedClass && state.selectedClass !== row.name;
-    const points = DM_METRIC_AXES.map((axis, axisIndex) => {
-      const angle = -Math.PI / 2 + (2 * Math.PI * axisIndex) / DM_METRIC_AXES.length;
-      const ratio = valueForAxis(row, axis) / maxByAxis[axis];
-      return polarToCartesian(cx, cy, radius * ratio, angle);
-    });
-
-    const polygon = document.createElementNS(svgNS, 'polygon');
-    polygon.setAttribute('points', points.map((p) => `${p.x},${p.y}`).join(' '));
-    polygon.setAttribute('fill', color);
-    polygon.setAttribute('fill-opacity', isDim ? '0.03' : '0.08');
-    polygon.setAttribute('stroke', color);
-    polygon.setAttribute('stroke-width', state.selectedClass === row.name ? '3' : '2');
-    polygon.setAttribute('stroke-opacity', isDim ? '0.2' : '0.9');
-    svg.appendChild(polygon);
-
-    points.forEach((point) => {
-      const dot = document.createElementNS(svgNS, 'circle');
-      dot.setAttribute('cx', String(point.x));
-      dot.setAttribute('cy', String(point.y));
-      dot.setAttribute('r', state.selectedClass === row.name ? '4.2' : '3.2');
-      dot.setAttribute('fill', color);
-      dot.setAttribute('fill-opacity', isDim ? '0.25' : '0.95');
-      svg.appendChild(dot);
-    });
-  });
-
-  host.appendChild(svg);
-  setStatus('dmStatus', `已渲染 ${rows.length} 个类的设计度量雷达图。`);
-}
-
 function renderTable() {
   const rows = [...state.rows].sort((a, b) => b.risk - a.risk);
   if (!rows.length) {
@@ -1617,6 +1346,19 @@ function renderTable() {
       <td>${row.cbo}</td>
       <td>${row.rfc}</td>
       <td>${row.lcom.toFixed(2)}</td>
+      <td>${row.nop}</td>
+      <td>${row.nom}</td>
+      <td>${row.noo}</td>
+      <td>${row.pod.toFixed(2)}</td>
+      <td>${row.overrideRatio.toFixed(2)}</td>
+      <td>${row.overloadRatio.toFixed(2)}</td>
+      <td>${row.sk.toFixed(2)}</td>
+      <td>${row.dac}</td>
+      <td>${row.moa}</td>
+      <td>${row.cam.toFixed(2)}</td>
+      <td>${row.cis}</td>
+      <td>${row.aif.toFixed(2)}</td>
+      <td>${row.mif.toFixed(2)}</td>
     </tr>`;
   }).join('');
 
@@ -1625,7 +1367,7 @@ function renderTable() {
       <thead>
         <tr>
           <th>类名</th>
-          ${['WMC', 'DIT', 'NOC', 'CBO', 'RFC', 'LCOM'].map(metricHeader).join('')}
+          ${['WMC', 'DIT', 'NOC', 'CBO', 'RFC', 'LCOM', 'NOP', 'NOM', 'NOO', 'POD', 'overrideRatio', 'overloadRatio', 'SK', 'DAC', 'MOA', 'CAM', 'CIS', 'AIF', 'MIF'].map(metricHeader).join('')}
         </tr>
       </thead>
       <tbody>${body}</tbody>
@@ -1643,109 +1385,23 @@ function renderTable() {
   });
 }
 
-function renderSmTable() {
-  const rows = [...state.rows].sort((a, b) => b.risk - a.risk);
-  if (!rows.length) {
-    byId('smTableWrap').innerHTML = '<div style="padding:16px;color:#9bb8db;">当前数据源没有类级明细。</div>';
-    return;
-  }
-
-  const body = rows.map((row) => {
-    const active = state.selectedClass === row.name ? 'row-active' : '';
-    return `<tr class="${active}">
-      <td><a class="class-link" data-class="${escapeHtml(row.name)}">${escapeHtml(row.name)}</a></td>
-      <td>${row.nop}</td>
-      <td>${row.nom}</td>
-      <td>${row.noo}</td>
-      <td>${row.pod.toFixed(2)}</td>
-    </tr>`;
-  }).join('');
-
-  byId('smTableWrap').innerHTML = `
-    <table>
-      <thead>
-        <tr>
-          <th>类名</th>
-          <th>NOP</th>
-          <th>NOM</th>
-          <th>NOO</th>
-          <th>POD</th>
-        </tr>
-      </thead>
-      <tbody>${body}</tbody>
-    </table>
-  `;
-
-  byId('smTableWrap').querySelectorAll('.class-link').forEach((link) => {
-    link.addEventListener('click', (event) => {
-      event.preventDefault();
-      state.selectedClass = link.dataset.class;
-      renderSmTable();
-      renderSizeMetricsRadar();
-      renderSMLegend();
-    });
-  });
+function ooMetricLabel(metricKey) {
+  const el = byId('oo-chart-metric');
+  const opt = el?.querySelector(`option[value="${CSS.escape(metricKey)}"]`);
+  return opt?.textContent?.trim() || metricKey;
 }
 
-function renderDmTable() {
-  const rows = [...state.rows].sort((a, b) => b.risk - a.risk);
-  if (!rows.length) {
-    byId('dmTableWrap').innerHTML = '<div style="padding:16px;color:#9bb8db;">当前数据源没有类级明细。</div>';
-    return;
-  }
-
-  const body = rows.map((row) => {
-    const active = state.selectedClass === row.name ? 'row-active' : '';
-    return `<tr class="${active}">
-      <td><a class="class-link" data-class="${escapeHtml(row.name)}">${escapeHtml(row.name)}</a></td>
-      <td>${row.overrideRatio.toFixed(2)}</td>
-      <td>${row.overloadRatio.toFixed(2)}</td>
-      <td>${row.dac}</td>
-      <td>${row.moa}</td>
-      <td>${row.cam.toFixed(2)}</td>
-      <td>${row.cis}</td>
-      <td>${row.sk.toFixed(2)}</td>
-    </tr>`;
-  }).join('');
-
-  byId('dmTableWrap').innerHTML = `
-    <table>
-      <thead>
-        <tr>
-          <th>类名</th>
-          <th>overrideRatio</th>
-          <th>overloadRatio</th>
-          <th>DAC</th>
-          <th>MOA</th>
-          <th>CAM</th>
-          <th>CIS</th>
-          <th>SK</th>
-        </tr>
-      </thead>
-      <tbody>${body}</tbody>
-    </table>
-  `;
-
-  byId('dmTableWrap').querySelectorAll('.class-link').forEach((link) => {
-    link.addEventListener('click', (event) => {
-      event.preventDefault();
-      state.selectedClass = link.dataset.class;
-      renderDmTable();
-      renderDesignMetricsRadar();
-      renderDMLegend();
-    });
-  });
+function ooMetricValue(row, metricKey) {
+  const value = row?.[metricKey];
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string' && value.trim() !== '' && !Number.isNaN(Number(value))) return Number(value);
+  return 0;
 }
 
 function ooMetricFormat(metricKey, value) {
   const v = typeof value === 'number' && Number.isFinite(value) ? value : 0;
   if (['lcom', 'pod', 'overrideRatio', 'overloadRatio', 'sk', 'cam', 'aif', 'mif'].includes(metricKey)) return v.toFixed(2);
   return String(Math.round(v));
-}
-
-function ooMetricValue(row, key) {
-  const v = row[key];
-  return typeof v === 'number' && Number.isFinite(v) ? v : 0;
 }
 
 function renderOoBarChart() {
@@ -1762,36 +1418,30 @@ function renderOoBarChart() {
   const sorted = rows
     .map((row) => ({ row, value: ooMetricValue(row, metricKey) }))
     .sort((a, b) => b.value - a.value);
-
   const top = sorted.slice(0, 20);
-  const maxVal = top.length > 0 ? top[0].value : 1;
-
-  const metricLabels = {
-    wmc: 'WMC (加权方法数)', dit: 'DIT (继承树深度)', noc: 'NOC (子类数量)',
-    cbo: 'CBO (耦合度)', rfc: 'RFC (类响应集)', lcom: 'LCOM (内聚缺失度)',
-    nop: 'NOP (多态方法数)', nom: 'NOM (重写方法数)', noo: 'NOO (重载方法数)',
-    pod: 'POD (多态度)', overrideRatio: 'overrideRatio (重写比率)',
-    overloadRatio: 'overloadRatio (重载比率)', sk: 'SK (特殊化指数)',
-    dac: 'DAC (数据抽象耦合)', moa: 'MOA (聚合度量)',
-    cam: 'CAM (计算抽象度量)', cis: 'CIS (类接口大小)',
-    aif: 'AIF (属性继承因子)', mif: 'MIF (方法继承因子)',
-  };
-  const title = metricLabels[metricKey] || metricKey;
+  const max = Math.max(1e-9, ...top.map((item) => item.value));
+  const title = ooMetricLabel(metricKey);
 
   host.innerHTML = `
     <div class="oo-bar-grid">
-      ${top.map(({ row, value }) => {
-        const pct = maxVal > 0 ? (value / maxVal) * 100 : 0;
+      ${top.map((item, idx) => {
+        const width = Math.max(0, Math.min(100, (item.value / max) * 100));
+        const name = escapeHtml(item.row.name || '-');
+        const value = escapeHtml(ooMetricFormat(metricKey, item.value));
+        const dim = state.selectedClass && state.selectedClass !== item.row.name ? 'opacity:0.55;' : '';
+        const delay = Math.min(220, idx * 18);
         return `
-        <div class="oo-bar-row">
-          <div class="oo-bar-label" title="${escapeHtml(row.name)}">${escapeHtml(row.name.split('.').pop())}</div>
-          <div class="oo-bar-track">
-            <div class="oo-bar-fill" style="width:${pct}%"></div>
+          <div class="oo-bar-row" style="${dim}">
+            <div class="oo-bar-label" title="${name}">${name}</div>
+            <div class="oo-bar-track" aria-label="${name} ${title}">
+              <div class="oo-bar-fill" style="width:${width.toFixed(2)}%;transition-delay:${delay}ms;"></div>
+            </div>
+            <div class="oo-bar-value">${value}</div>
           </div>
-          <div class="oo-bar-value">${ooMetricFormat(metricKey, value)}</div>
-        </div>`;
+        `;
       }).join('')}
-    </div>`;
+    </div>
+  `;
 
   setStatus('oo-chart-status', `柱状图：指标=${title}，展示 Top ${top.length}（按值降序）。`);
 }
@@ -1800,138 +1450,17 @@ function syncOoTableOrChart() {
   const tableWrap = byId('tableWrap');
   const barHost = byId('ooBarHost');
   const toggle = byId('oo-toggle-chart');
-  const metricLabel = byId('oo-metric-label');
-  if (!tableWrap || !barHost || !toggle || !metricLabel) return;
+  if (!tableWrap || !barHost || !toggle) return;
 
   const isBar = state.ooView === 'bar';
   tableWrap.classList.toggle('hidden', isBar);
   barHost.classList.toggle('hidden', !isBar);
-  metricLabel.style.display = isBar ? '' : 'none';
   toggle.textContent = isBar ? '表格展示' : '柱状图展示';
 
   if (isBar) {
     renderOoBarChart();
-  }
-}
-
-function renderSmBarChart() {
-  const host = byId('smBarHost');
-  if (!host) return;
-  const metricKey = state.smChartMetric || 'nop';
-  const rows = Array.isArray(state.rows) ? [...state.rows] : [];
-  if (!rows.length) {
-    host.innerHTML = '<div style="padding:16px;color:#9bb8db;">当前数据源没有类级明细，无法绘制柱状图。</div>';
-    setStatus('sm-chart-status', '柱状图：暂无数据。', true);
-    return;
-  }
-
-  const sorted = rows
-    .map((row) => ({ row, value: ooMetricValue(row, metricKey) }))
-    .sort((a, b) => b.value - a.value);
-
-  const top = sorted.slice(0, 20);
-  const maxVal = top.length > 0 ? top[0].value : 1;
-
-  const metricLabels = {
-    nop: 'NOP (多态方法数)', nom: 'NOM (重写方法数)',
-    noo: 'NOO (重载方法数)', pod: 'POD (多态度)',
-  };
-  const title = metricLabels[metricKey] || metricKey;
-
-  host.innerHTML = `
-    <div class="oo-bar-grid">
-      ${top.map(({ row, value }) => {
-        const pct = maxVal > 0 ? (value / maxVal) * 100 : 0;
-        return `
-        <div class="oo-bar-row">
-          <div class="oo-bar-label" title="${escapeHtml(row.name)}">${escapeHtml(row.name.split('.').pop())}</div>
-          <div class="oo-bar-track">
-            <div class="oo-bar-fill" style="width:${pct}%"></div>
-          </div>
-          <div class="oo-bar-value">${ooMetricFormat(metricKey, value)}</div>
-        </div>`;
-      }).join('')}
-    </div>`;
-
-  setStatus('sm-chart-status', `柱状图：指标=${title}，展示 Top ${top.length}（按值降序）。`);
-}
-
-function syncSmTableOrChart() {
-  const barHost = byId('smBarHost');
-  const tableWrap = byId('smTableWrap');
-  const toggle = byId('sm-toggle-chart');
-  const metricLabel = byId('sm-metric-label');
-  if (!barHost || !toggle || !tableWrap || !metricLabel) return;
-
-  const isBar = state.smView === 'bar';
-  tableWrap.classList.toggle('hidden', isBar);
-  barHost.classList.toggle('hidden', !isBar);
-  metricLabel.style.display = isBar ? '' : 'none';
-  toggle.textContent = isBar ? '表格展示' : '柱状图展示';
-
-  if (isBar) {
-    renderSmBarChart();
-  }
-}
-
-function renderDmBarChart() {
-  const host = byId('dmBarHost');
-  if (!host) return;
-  const metricKey = state.dmChartMetric || 'overrideRatio';
-  const rows = Array.isArray(state.rows) ? [...state.rows] : [];
-  if (!rows.length) {
-    host.innerHTML = '<div style="padding:16px;color:#9bb8db;">当前数据源没有类级明细，无法绘制柱状图。</div>';
-    setStatus('dm-chart-status', '柱状图：暂无数据。', true);
-    return;
-  }
-
-  const sorted = rows
-    .map((row) => ({ row, value: ooMetricValue(row, metricKey) }))
-    .sort((a, b) => b.value - a.value);
-
-  const top = sorted.slice(0, 20);
-  const maxVal = top.length > 0 ? top[0].value : 1;
-
-  const metricLabels = {
-    overrideRatio: 'overrideRatio (重写比率)', overloadRatio: 'overloadRatio (重载比率)',
-    dac: 'DAC (数据抽象耦合)', moa: 'MOA (聚合度量)',
-    cam: 'CAM (计算抽象度量)', cis: 'CIS (类接口大小)', sk: 'SK (特殊化指数)',
-  };
-  const title = metricLabels[metricKey] || metricKey;
-
-  host.innerHTML = `
-    <div class="oo-bar-grid">
-      ${top.map(({ row, value }) => {
-        const pct = maxVal > 0 ? (value / maxVal) * 100 : 0;
-        return `
-        <div class="oo-bar-row">
-          <div class="oo-bar-label" title="${escapeHtml(row.name)}">${escapeHtml(row.name.split('.').pop())}</div>
-          <div class="oo-bar-track">
-            <div class="oo-bar-fill" style="width:${pct}%"></div>
-          </div>
-          <div class="oo-bar-value">${ooMetricFormat(metricKey, value)}</div>
-        </div>`;
-      }).join('')}
-    </div>`;
-
-  setStatus('dm-chart-status', `柱状图：指标=${title}，展示 Top ${top.length}（按值降序）。`);
-}
-
-function syncDmTableOrChart() {
-  const barHost = byId('dmBarHost');
-  const tableWrap = byId('dmTableWrap');
-  const toggle = byId('dm-toggle-chart');
-  const metricLabel = byId('dm-metric-label');
-  if (!barHost || !toggle || !tableWrap || !metricLabel) return;
-
-  const isBar = state.dmView === 'bar';
-  tableWrap.classList.toggle('hidden', isBar);
-  barHost.classList.toggle('hidden', !isBar);
-  metricLabel.style.display = isBar ? '' : 'none';
-  toggle.textContent = isBar ? '表格展示' : '柱状图展示';
-
-  if (isBar) {
-    renderDmBarChart();
+  } else {
+    setStatus('oo-chart-status', '');
   }
 }
 
@@ -2415,16 +1944,8 @@ function applyMetrics(data, sourceName) {
   populateCfgSelectors();
   renderLegend();
   renderRadar();
-  renderSMLegend();
-  renderSizeMetricsRadar();
-  renderDMLegend();
-  renderDesignMetricsRadar();
   renderTable();
-  renderSmTable();
-  renderDmTable();
   syncOoTableOrChart();
-  syncSmTableOrChart();
-  syncDmTableOrChart();
 
   // Keep the visible metric panels in sync when a new project is uploaded.
   autoEstimateFunctionPoint();
@@ -2533,30 +2054,6 @@ function bindEvents() {
     }
   });
 
-  byId('sm-toggle-chart')?.addEventListener('click', () => {
-    state.smView = state.smView === 'bar' ? 'table' : 'bar';
-    syncSmTableOrChart();
-  });
-
-  byId('sm-chart-metric')?.addEventListener('change', (event) => {
-    state.smChartMetric = event.target.value;
-    if (state.smView === 'bar') {
-      renderSmBarChart();
-    }
-  });
-
-  byId('dm-toggle-chart')?.addEventListener('click', () => {
-    state.dmView = state.dmView === 'bar' ? 'table' : 'bar';
-    syncDmTableOrChart();
-  });
-
-  byId('dm-chart-metric')?.addEventListener('change', (event) => {
-    state.dmChartMetric = event.target.value;
-    if (state.dmView === 'bar') {
-      renderDmBarChart();
-    }
-  });
-
   byId('fp-calc').addEventListener('click', calcFunctionPoint);
   byId('fp-auto').addEventListener('click', autoEstimateFunctionPoint);
   byId('fp-add-tx').addEventListener('click', addTransactionFunction);
@@ -2573,8 +2070,6 @@ function bindEvents() {
 
   window.addEventListener('resize', () => {
     if (state.activeTab === 'oo' && state.rows.length) renderRadar();
-    if (state.activeTab === 'sm' && state.rows.length) renderSizeMetricsRadar();
-    if (state.activeTab === 'dm' && state.rows.length) renderDesignMetricsRadar();
   });
 }
 
@@ -2593,16 +2088,7 @@ async function init() {
   renderSummary();
   renderLegend();
   renderRadar();
-  renderSMLegend();
-  renderSizeMetricsRadar();
-  renderDMLegend();
-  renderDesignMetricsRadar();
   renderTable();
-  renderSmTable();
-  renderDmTable();
-  syncOoTableOrChart();
-  syncSmTableOrChart();
-  syncDmTableOrChart();
   switchTab('fp');
 }
 

@@ -593,33 +593,7 @@
       min-height: 560px;
     }
 
-    .chart-header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      margin-bottom: 16px;
-    }
-
-    .chart-title-area {
-      flex: 1;
-    }
-
-    .chart-title {
-      margin: 0 0 4px;
-      font-size: 20px;
-      color: #2bd9fe;
-      font-weight: 600;
-    }
-
-    .chart-subtitle {
-      margin: 0;
-      font-size: 13px;
-      color: #8db0d6;
-    }
-
-    #radarHost,
-    #smRadarHost,
-    #dmRadarHost {
+    #radarHost {
       width: 100%;
       height: 520px;
       border: 1px solid #2b4c74;
@@ -629,14 +603,6 @@
         linear-gradient(180deg, #132746 0%, #0d1e36 100%);
       box-shadow: inset 0 0 0 1px rgba(84, 140, 202, 0.35);
       animation: chartGlow 5.4s ease-in-out infinite;
-    }
-
-    #smRadarHost {
-      animation-delay: 0.5s;
-    }
-
-    #dmRadarHost {
-      animation-delay: 1s;
     }
 
     .legend {
@@ -838,29 +804,6 @@
       overflow: hidden;
     }
 
-    .table-wrap {
-      overflow: auto;
-      max-height: calc(100vh - 220px);
-      scrollbar-width: thin;
-      scrollbar-color: #4c77aa #10253f;
-    }
-
-    .table-wrap::-webkit-scrollbar {
-      width: 9px;
-      height: 9px;
-    }
-
-    .table-wrap::-webkit-scrollbar-track {
-      background: #10253f;
-      border-radius: 999px;
-    }
-
-    .table-wrap::-webkit-scrollbar-thumb {
-      background: #4c77aa;
-      border-radius: 999px;
-      border: 2px solid #10253f;
-    }
-
     .oo-view-controls {
       display: flex;
       align-items: center;
@@ -879,10 +822,6 @@
 
     .oo-bar-host {
       padding: 10px 16px 16px;
-    }
-
-    .oo-bar-host.hidden {
-      display: none;
     }
 
     .oo-bar-grid {
@@ -933,80 +872,27 @@
       font-variant-numeric: tabular-nums;
     }
 
-    /* 指标分组标题 */
-    .metric-group-title {
-      font-size: 13px;
-      color: #2bd9fe;
-      margin-top: 16px;
-      margin-bottom: 8px;
-      padding-bottom: 6px;
-      border-bottom: 1px solid rgba(43, 217, 254, 0.2);
+    .table-wrap {
+      overflow: auto;
+      max-height: calc(100vh - 220px);
+      scrollbar-width: thin;
+      scrollbar-color: #4c77aa #10253f;
     }
 
-    .metric-group-title:first-child {
-      margin-top: 0;
+    .table-wrap::-webkit-scrollbar {
+      width: 9px;
+      height: 9px;
     }
 
-    .bar-chart {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
+    .table-wrap::-webkit-scrollbar-track {
+      background: #10253f;
+      border-radius: 999px;
     }
 
-    .bar-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      height: 24px;
-    }
-
-    .bar-label {
-      width: 120px;
-      font-size: 12px;
-      color: #d8e8ff;
-      text-align: right;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      flex-shrink: 0;
-    }
-
-    .bar-track {
-      flex: 1;
-      height: 100%;
-      background: rgba(255, 255, 255, 0.06);
-      border-radius: 4px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .bar-fill {
-      height: 100%;
-      transition: width 0.4s ease;
-      position: absolute;
-      opacity: 0.85;
-    }
-
-    .bar-value {
-      width: 50px;
-      font-size: 11px;
-      color: #8db0d6;
-      text-align: left;
-      flex-shrink: 0;
-    }
-
-    /* 指标分组标题 */
-    .metric-group-title {
-      font-size: 13px;
-      color: #2bd9fe;
-      margin-top: 16px;
-      margin-bottom: 8px;
-      padding-bottom: 6px;
-      border-bottom: 1px solid rgba(43, 217, 254, 0.2);
-    }
-
-    .metric-group-title:first-child {
-      margin-top: 0;
+    .table-wrap::-webkit-scrollbar-thumb {
+      background: #4c77aa;
+      border-radius: 999px;
+      border: 2px solid #10253f;
     }
 
     table {
@@ -1577,23 +1463,13 @@
       min-height: 600px;
     }
 
-    #radarHost,
-    #smRadarHost,
-    #dmRadarHost {
+    #radarHost {
       height: 520px;
       background: #ffffff;
       border: 1px solid #e5ebf3;
       border-radius: 8px;
       box-shadow: none;
       animation: none;
-    }
-
-    .chart-title {
-      color: var(--brand);
-    }
-
-    .chart-subtitle {
-      color: #52647d;
     }
 
     .legend {
@@ -1667,45 +1543,6 @@
     .table-wrap {
       max-height: calc(100vh - 220px);
       scrollbar-color: #c0cad8 #f4f7fb;
-    }
-
-    .oo-view-controls .left {
-      gap: 8px;
-    }
-
-    .oo-bar-grid {
-      background: #f8fafc;
-      border-color: #e2e9f3;
-    }
-
-    .oo-bar-label {
-      color: #172033;
-    }
-
-    .oo-bar-track {
-      background: #eef2f7;
-      border-color: #d4dce8;
-    }
-
-    .oo-bar-fill {
-      background: linear-gradient(90deg, var(--brand) 0%, rgba(11, 67, 199, 0.55) 100%);
-    }
-
-    .oo-bar-value {
-      color: #0f172a;
-    }
-
-    .bar-label {
-      color: #0f172a;
-    }
-
-    .bar-track {
-      background: #f0f4f9;
-    }
-
-    .metric-group-title {
-      color: var(--brand);
-      border-bottom-color: rgba(11, 67, 199, 0.15);
     }
 
     table {
@@ -1829,8 +1666,6 @@
           <button class="menu-btn active" data-key="fp"><span class="i">▥</span><span class="txt">功能点度量</span></button>
           <button class="menu-btn" data-key="uc"><span class="i">⌁</span><span class="txt">用例图度量</span></button>
           <button class="menu-btn" data-key="oo"><span class="i">▦</span><span class="txt">面向对象度量</span></button>
-          <button class="menu-btn" data-key="sm"><span class="i">◈</span><span class="txt">规模度量</span></button>
-          <button class="menu-btn" data-key="dm"><span class="i">◉</span><span class="txt">拓展指标检查</span></button>
           <button class="menu-btn" data-key="cfg"><span class="i">◇</span><span class="txt">控制流图度量</span></button>
           <button class="menu-btn" data-key="loc"><span class="i">&lt;/&gt;</span><span class="txt">代码行度量</span></button>
           <button class="menu-btn" data-key="ai"><span class="i">✦</span><span class="txt">智能分析</span></button>
@@ -1884,71 +1719,6 @@
               <div id="radarHost"></div>
               <div class="status" id="chartStatus"></div>
             </div>
-          </div>
-
-          <div id="tab-sm" class="tab-pane hidden">
-            <div class="chart-wrap">
-              <div class="chart-header">
-                <div class="chart-title-area">
-                  <h3 class="chart-title">规模度量</h3>
-                  <p class="chart-subtitle">展示类的规模相关指标：NOP, NOM, NOO, POD</p>
-                </div>
-              </div>
-              <div class="legend" id="smLegend"></div>
-              <div id="smRadarHost"></div>
-              <div class="status" id="smStatus"></div>
-            </div>
-            <div class="oo-view-controls">
-              <div class="left">
-                <label class="field" style="min-width:220px; display:none;" id="sm-metric-label">
-                  <span class="metric-tip" tabindex="0" data-tooltip="选择一个指标，把每个类的该指标以柱状图方式展示（默认显示 Top 20）。">柱状图指标</span>
-                  <select id="sm-chart-metric">
-                    <option value="nop">NOP</option>
-                    <option value="nom">NOM</option>
-                    <option value="noo">NOO</option>
-                    <option value="pod">POD</option>
-                  </select>
-                </label>
-                <button class="btn secondary" id="sm-toggle-chart">柱状图展示</button>
-              </div>
-              <div class="status" id="sm-chart-status"></div>
-            </div>
-            <div class="oo-bar-host hidden" id="smBarHost"></div>
-            <div class="table-wrap" id="smTableWrap"></div>
-          </div>
-
-          <div id="tab-dm" class="tab-pane hidden">
-            <div class="chart-wrap">
-              <div class="chart-header">
-                <div class="chart-title-area">
-                  <h3 class="chart-title">拓展指标检查</h3>
-                  <p class="chart-subtitle">展示类的设计质量指标：overrideRatio, overloadRatio, DAC, MOA, CAM, CIS, SK</p>
-                </div>
-              </div>
-              <div class="legend" id="dmLegend"></div>
-              <div id="dmRadarHost"></div>
-              <div class="status" id="dmStatus"></div>
-            </div>
-            <div class="oo-view-controls">
-              <div class="left">
-                <label class="field" style="min-width:220px; display:none;" id="dm-metric-label">
-                  <span class="metric-tip" tabindex="0" data-tooltip="选择一个指标，把每个类的该指标以柱状图方式展示（默认显示 Top 20）。">柱状图指标</span>
-                  <select id="dm-chart-metric">
-                    <option value="overrideRatio">overrideRatio</option>
-                    <option value="overloadRatio">overloadRatio</option>
-                    <option value="dac">DAC</option>
-                    <option value="moa">MOA</option>
-                    <option value="cam">CAM</option>
-                    <option value="cis">CIS</option>
-                    <option value="sk">SK</option>
-                  </select>
-                </label>
-                <button class="btn secondary" id="dm-toggle-chart">柱状图展示</button>
-              </div>
-              <div class="status" id="dm-chart-status"></div>
-            </div>
-            <div class="oo-bar-host hidden" id="dmBarHost"></div>
-            <div class="table-wrap" id="dmTableWrap"></div>
           </div>
 
           <div id="tab-fp" class="tab-pane">
@@ -2088,7 +1858,7 @@
         <div class="panel-title">类级指标明细</div>
         <div class="oo-view-controls">
           <div class="left">
-            <label class="field" style="min-width:220px; display:none;" id="oo-metric-label">
+            <label class="field" style="min-width:220px;">
               <span class="metric-tip" tabindex="0" data-tooltip="选择一个指标，把每个类的该指标以柱状图方式展示（默认显示 Top 20）。">柱状图指标</span>
               <select id="oo-chart-metric">
                 <option value="wmc">WMC</option>
@@ -2097,6 +1867,19 @@
                 <option value="cbo">CBO</option>
                 <option value="rfc">RFC</option>
                 <option value="lcom">LCOM</option>
+                <option value="nop">NOP</option>
+                <option value="nom">NOM</option>
+                <option value="noo">NOO</option>
+                <option value="pod">POD</option>
+                <option value="overrideRatio">overrideRatio</option>
+                <option value="overloadRatio">overloadRatio</option>
+                <option value="sk">SK</option>
+                <option value="dac">DAC</option>
+                <option value="moa">MOA</option>
+                <option value="cam">CAM</option>
+                <option value="cis">CIS</option>
+                <option value="aif">AIF</option>
+                <option value="mif">MIF</option>
               </select>
             </label>
             <button class="btn secondary" id="oo-toggle-chart">柱状图展示</button>
@@ -2109,6 +1892,6 @@
     </main>
   </div>
 
-  <script src="./main.js?v=20260429-bar"></script>
+  <script src="./main.js?v=20260428-ai"></script>
 </body>
 </html>
