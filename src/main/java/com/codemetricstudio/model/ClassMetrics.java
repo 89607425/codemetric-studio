@@ -24,16 +24,10 @@ public class ClassMetrics {
     private double sk;   // Specialization Index (特化指数)
     private int dac;    // Data Abstraction Coupling
     private int moa;    // Measure of Aggregation
-    private double mfa;  // Measure of Functional Abstraction
     private double cam;  // Computational Abstraction Metric
     private int cis;    // Class Interface Size
-    private int nsc;    // Number of Static Methods
 
     // ===== 新增度量 =====
-    private double coa;    // Cohesion Among Methods (类内方法内聚性)
-    private int size1;     // Class Size (成员变量数)
-    private int mpc;      // Methods per Class (类的方法总数)
-    private double aif;   // Attribute Inheritance Factor (属性继承因子)
     private double mif;   // Method Inheritance Factor (方法继承因子)
 
     public ClassMetrics() {
@@ -181,14 +175,6 @@ public class ClassMetrics {
         this.moa = moa;
     }
 
-    public double getMfa() {
-        return mfa;
-    }
-
-    public void setMfa(double mfa) {
-        this.mfa = mfa;
-    }
-
     public double getCam() {
         return cam;
     }
@@ -203,38 +189,6 @@ public class ClassMetrics {
 
     public void setCis(int cis) {
         this.cis = cis;
-    }
-
-    public int getNsc() {
-        return nsc;
-    }
-
-    public void setNsc(int nsc) {
-        this.nsc = nsc;
-    }
-
-    public double getCoa() {
-        return coa;
-    }
-
-    public void setCoa(double coa) {
-        this.coa = coa;
-    }
-
-    public int getSize1() {
-        return size1;
-    }
-
-    public void setSize1(int size1) {
-        this.size1 = size1;
-    }
-
-    public int getMpc() {
-        return mpc;
-    }
-
-    public void setMpc(int mpc) {
-        this.mpc = mpc;
     }
 
     public double getAif() {

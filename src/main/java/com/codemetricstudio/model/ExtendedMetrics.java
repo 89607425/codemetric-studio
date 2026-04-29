@@ -30,14 +30,6 @@ public class ExtendedMetrics {
     private int moa;
 
     /**
-     * MFA (Measure of Functional Abstraction) - 功能抽象度量
-     * 类中调用的外部方法数占所有方法调用的比例
-     * 特点：衡量类的抽象程度和依赖反转倾向
-     * 高MFA表明良好的抽象，但过高可能导致过度设计
-     */
-    private double mfa;
-
-    /**
      * CAM (Computational Abstraction Metric) - 计算抽象度量
      * 一个方法中多个不同类型参数被使用的次数
      * CAM = (r/t) * (1/t) 其中 t=参数类型数，r=使用多种类型的参数的方法数
@@ -52,13 +44,6 @@ public class ExtendedMetrics {
      * 高CIS可能表明类承担过多职责
      */
     private int cis;
-
-    /**
-     * NSC (Number of Static Methods) - 静态方法数
-     * 类的静态方法数量
-     * 特点：高静态方法数可能表明过程式设计倾向
-     */
-    private int nsc;
 
     /**
      * ADC (Average Depth of Inheritance in Call graph) - 调用图平均继承深度
@@ -78,28 +63,6 @@ public class ExtendedMetrics {
      * 已有，从CK
      */
     private int noc;
-
-    /**
-     * COA (Cohesion Among Methods) - 类内方法内聚性
-     * 基于方法对共享字段的访问计算内聚性
-     * COA = P / (M * (P + 1) / 2)，其中 P=共享字段的方法对数，M=方法数
-     * 特点：衡量类内方法的内聚程度，高值表明良好的单一职责设计
-     */
-    private double coa;
-
-    /**
-     * Size1 (Class Size) - 类大小（成员变量数）
-     * 类的实例变量（字段）数量
-     * 特点：反映类的数据组织复杂度
-     */
-    private int size1;
-
-    /**
-     * MPC (Methods per Class) - 类的方法总数
-     * 类中定义的所有方法数量（含继承来的方法需额外计算）
-     * 特点：衡量类的功能规模
-     */
-    private int mpc;
 
     /**
      * AIF (Attribute Inheritance Factor) - 属性继承因子
@@ -142,14 +105,6 @@ public class ExtendedMetrics {
         this.moa = moa;
     }
 
-    public double getMfa() {
-        return mfa;
-    }
-
-    public void setMfa(double mfa) {
-        this.mfa = mfa;
-    }
-
     public double getCam() {
         return cam;
     }
@@ -164,14 +119,6 @@ public class ExtendedMetrics {
 
     public void setCis(int cis) {
         this.cis = cis;
-    }
-
-    public int getNsc() {
-        return nsc;
-    }
-
-    public void setNsc(int nsc) {
-        this.nsc = nsc;
     }
 
     public double getAdc() {
@@ -196,30 +143,6 @@ public class ExtendedMetrics {
 
     public void setNoc(int noc) {
         this.noc = noc;
-    }
-
-    public double getCoa() {
-        return coa;
-    }
-
-    public void setCoa(double coa) {
-        this.coa = coa;
-    }
-
-    public int getSize1() {
-        return size1;
-    }
-
-    public void setSize1(int size1) {
-        this.size1 = size1;
-    }
-
-    public int getMpc() {
-        return mpc;
-    }
-
-    public void setMpc(int mpc) {
-        this.mpc = mpc;
     }
 
     public double getAif() {

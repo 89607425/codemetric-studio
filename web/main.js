@@ -244,13 +244,8 @@ const OO_METRIC_TITLES = {
   SK: '特化指数',
   DAC: '数据抽象耦合',
   MOA: '聚合度量',
-  MFA: '功能抽象度',
   CAM: '计算抽象度量',
   CIS: '类接口规模',
-  NSC: '静态方法数',
-  COA: '类内方法内聚性',
-  Size1: '成员变量数',
-  MPC: '类的方法总数',
   AIF: '属性继承因子',
   MIF: '方法继承因子',
 };
@@ -464,13 +459,259 @@ function parseClassDiagram(xmlDoc, sourceName) {
   let totalOperations = 0;
   let relationshipCount = 0;
 
+  // 解析继承关系 (Generalization)
+  // Object1 = 子类, Object2 = 父类
+  const generalizationNodes = allByLocalName(xmlDoc, 'Generalization');
+  const childToParent = new Map(); // 子类 -> 父类
+  const parentChildCount = new Map(); // 父类 -> 直接子类数量
+
+  // 初始化所有类的子类计数
+  classNodes.forEach((node) => {
+    parentChildCount.set(node.getAttribute('Id'), 0);
+  });
+
+  generalizationNodes.forEach((gen) => {
+    const obj1 = getRefId(gen, 'Object1'); // 子类
+    const obj2 = getRefId(gen, 'Object2'); // 父类
+    if (obj1 && obj2) {
+      childToParent.set(obj1, obj2);
+      const count = parentChildCount.get(obj2) || 0;
+      parentChildCount.set(obj2, count + 1);
+    }
+  });
+
+  // 解析各种耦合关系
+  // CBO 计入：Association、Composition、Aggregation、Dependency、Implementation
+  // CBO 不计入：继承关系（Generalization）
+
+  // 初始化每个类的耦合集合
+  const classCouplings = new Map();
+  classNodes.forEach((node) => {
+    classCouplings.set(node.getAttribute('Id'), new Set());
+  });
+
+  // 解析关联关系 (Association) - 双向关系
+  const associationNodes = allByLocalName(xmlDoc, 'Association');
+  associationNodes.forEach((assoc) => {
+    const obj1 = getRefId(assoc, 'Object1');
+    const obj2 = getRefId(assoc, 'Object2');
+    if (obj1 && obj2) {
+      classCouplings.get(obj1)?.add(obj2);
+      classCouplings.get(obj2)?.add(obj1);
+    }
+  });
+
+  // 解析组合关系 (Composition) - 双向关系，整体与部分
+  const compositionNodes = allByLocalName(xmlDoc, 'Composition');
+  compositionNodes.forEach((comp) => {
+    const obj1 = getRefId(comp, 'Object1');
+    const obj2 = getRefId(comp, 'Object2');
+    if (obj1 && obj2) {
+      classCouplings.get(obj1)?.add(obj2);
+      classCouplings.get(obj2)?.add(obj1);
+    }
+  });
+
+  // 解析聚合关系 (Aggregation) - 双向关系，整体与部分
+  const aggregationNodes = allByLocalName(xmlDoc, 'Aggregation');
+  aggregationNodes.forEach((agg) => {
+    const obj1 = getRefId(agg, 'Object1');
+    const obj2 = getRefId(agg, 'Object2');
+    if (obj1 && obj2) {
+      classCouplings.get(obj1)?.add(obj2);
+      classCouplings.get(obj2)?.add(obj1);
+    }
+  });
+
+  // 解析依赖关系 (Dependency) - Object1 依赖 Object2，单向
+  const dependencyNodes = allByLocalName(xmlDoc, 'Dependency');
+  dependencyNodes.forEach((dep) => {
+    const obj1 = getRefId(dep, 'Object1'); // 依赖方
+    const obj2 = getRefId(dep, 'Object2'); // 被依赖方
+    if (obj1 && obj2) {
+      classCouplings.get(obj1)?.add(obj2);
+    }
+  });
+
+  // 解析实现关系 (Realization/Implementation) - Object1 实现 Object2，单向
+  const realizationNodes = allByLocalName(xmlDoc, 'Realization');
+  realizationNodes.forEach((real) => {
+    const obj1 = getRefId(real, 'Object1');
+    const obj2 = getRefId(real, 'Object2');
+    if (obj1 && obj2) {
+      classCouplings.get(obj1)?.add(obj2);
+    }
+  });
+
+  // 收集所有类的方法信息（用于判断重写和重载）
+  const classMethods = new Map(); // 类ID -> { methodNames: Set, methodDetails: [{name, paramCount}] }
+  classNodes.forEach((node) => {
+    const classId = node.getAttribute('Id');
+    const operations = allByLocalName(firstDirectChild(node, 'Operations') || node, 'Operation')
+      .filter((op) => op.hasAttribute('Id'));
+    
+    const methodNames = new Set();
+    const methodDetails = [];
+    
+    operations.forEach((op) => {
+      const name = getOomNodeName(op).toLowerCase();
+      const paramsContainer = firstDirectChild(op, 'Parameters');
+      const params = paramsContainer ? Array.from(paramsContainer.childNodes).filter((node) => node.nodeType === 1 && node.localName === 'Parameter' && node.hasAttribute('Id')) : [];
+      methodNames.add(name);
+      methodDetails.push({ name, paramCount: params.length });
+    });
+    
+    classMethods.set(classId, { methodNames, methodDetails, opCount: operations.length });
+  });
+
+  // 计算每个类的 DIT (继承树深度)
+  function calcDit(classId) {
+    let depth = 0;
+    let current = classId;
+    const visited = new Set();
+    while (current && !visited.has(current)) {
+      visited.add(current);
+      const parent = childToParent.get(current);
+      if (parent) {
+        depth++;
+        current = parent;
+      } else {
+        break;
+      }
+    }
+    return depth;
+  }
+
+  // 计算 NOO（被覆盖的方法数）和 overrideRatio
+  // overrideRatio = 子类重写方法数 / 直接父类方法数
+  function calcNooAndParentMethods(classId, methodNames) {
+    let noo = 0;
+    let parentNom = 0;
+    const parent = childToParent.get(classId); // 直接父类
+    
+    if (parent) {
+      const parentInfo = classMethods.get(parent);
+      if (parentInfo) {
+        parentNom = parentInfo.opCount; // 直接父类的方法数
+        const countedMethods = new Set();
+        
+        // 遍历继承链上的所有父类，收集重写的方法
+        let current = classId;
+        const visited = new Set();
+        while (current && !visited.has(current)) {
+          visited.add(current);
+          const p = childToParent.get(current);
+          if (p) {
+            const pInfo = classMethods.get(p);
+            if (pInfo) {
+              methodNames.forEach((name) => {
+                const lowerName = name.toLowerCase();
+                if (pInfo.methodNames.has(lowerName) && !countedMethods.has(lowerName)) {
+                  countedMethods.add(lowerName);
+                  noo++;
+                }
+              });
+            }
+            current = p;
+          } else {
+            break;
+          }
+        }
+      }
+    }
+    return { noo, parentNom };
+  }
+
+  // 计算 overloadRatio（重载方法数 / NOM）
+  // 重载：同一类中方法名相同但参数个数不同
+  function calcOverloadRatio(methodDetails, nom) {
+    if (nom <= 1) return 0;
+    let overloadedCount = 0;
+    const nameToMethods = new Map();
+    
+    methodDetails.forEach(({ name, paramCount }) => {
+      if (!nameToMethods.has(name)) {
+        nameToMethods.set(name, []);
+      }
+      nameToMethods.get(name).push(paramCount);
+    });
+    
+    // 统计有重载的方法
+    let overloadedMethods = 0;
+    nameToMethods.forEach((paramsList) => {
+      if (paramsList.length > 1) {
+        overloadedMethods++;
+      }
+    });
+    
+    overloadedCount = overloadedMethods;
+    
+    // 调试日志
+    console.log('=== overloadRatio debug ===');
+    console.log('methodDetails:', methodDetails);
+    console.log('nameToMethods:', [...nameToMethods.entries()]);
+    console.log('overloadedCount:', overloadedCount, 'nom:', nom);
+    
+    return nom > 0 ? +(overloadedCount / nom).toFixed(2) : 0;
+  }
+
+  // 测试 overloadRatio 计算
+  function testOverloadRatio() {
+    // 测试用例1: 有重载的方法
+    const methods1 = [
+      { name: 'add', paramCount: 1 },
+      { name: 'add', paramCount: 2 },  // 重载
+      { name: 'calculate', paramCount: 3 }
+    ];
+    console.log('测试1 (有重载):', calcOverloadRatio(methods1, 3), '期望: 0.33');
+    
+    // 测试用例2: 没有重载的方法
+    const methods2 = [
+      { name: 'insert', paramCount: 1 },
+      { name: 'update', paramCount: 1 },
+      { name: 'delete', paramCount: 1 }
+    ];
+    console.log('测试2 (无重载):', calcOverloadRatio(methods2, 3), '期望: 0');
+    
+    // 测试用例3: 构造函数重载
+    const methods3 = [
+      { name: 'userdaoimpl', paramCount: 0 },
+      { name: 'userdaoimpl', paramCount: 1 },
+      { name: 'userdaoimpl', paramCount: 2 }
+    ];
+    console.log('测试3 (构造函数重载):', calcOverloadRatio(methods3, 3), '期望: 0.33');
+  }
+  // testOverloadRatio(); // 暂时注释掉
+
+  // 计算 POD (Probability of Defect) - 缺陷概率
+  // 公式: POD = 1 - (1 - CBO/20) * (1 - DIT/7) * (1 - NOM/30)
+  function calcPod(cbo, dit, nom) {
+    const cboFactor = Math.min(cbo / 20, 1);
+    const ditFactor = Math.min(dit / 7, 1);
+    const nomFactor = Math.min(nom / 30, 1);
+    const pod = 1 - (1 - cboFactor) * (1 - ditFactor) * (1 - nomFactor);
+    return +pod.toFixed(2);
+  }
+
   classNodes.forEach((classNode) => {
     const className = getOomNodeName(classNode);
+    const classId = classNode.getAttribute('Id');
     const attributeNodes = allByLocalName(firstDirectChild(classNode, 'Attributes') || classNode, 'Attribute').filter((node) => node.hasAttribute('Id'));
     const operationNodes = allByLocalName(firstDirectChild(classNode, 'Operations') || classNode, 'Operation').filter((node) => node.hasAttribute('Id'));
     const couplings = new Set();
     let publicMethodCount = 0;
     let parameterCount = 0;
+
+    // 收集通过关系图谱耦合的类
+    const relationCouplings = classCouplings.get(classId);
+    if (relationCouplings) {
+      relationCouplings.forEach((coupledClassId) => {
+        const coupledClassName = classIdToName.get(coupledClassId);
+        if (coupledClassName) {
+          couplings.add(coupledClassName);
+        }
+      });
+    }
 
     attributeNodes.forEach((attr) => {
       const dataType = classIdToName.get(getRefId(attr, 'ObjectDataType')) || childText(attr, 'DataType');
@@ -478,11 +719,20 @@ function parseClassDiagram(xmlDoc, sourceName) {
       if (normalized && !isBuiltinType(normalized) && normalized !== className) couplings.add(normalized);
     });
 
+    const methodNames = []; // 收集方法名用于计算 NOO
+    const methodDetails = []; // 收集方法详情用于计算 overloadRatio
+
     operationNodes.forEach((op) => {
       const methodName = getOomNodeName(op);
+      methodNames.push(methodName);
       const visibility = childText(op, 'Operation.Visibility');
-      const params = allByLocalName(firstDirectChild(op, 'Parameters') || op, 'Parameter').filter((node) => node.hasAttribute('Id'));
+      // 获取 Parameters 容器下的所有 Parameter 子元素
+      const paramsContainer = firstDirectChild(op, 'Parameters');
+      const params = paramsContainer ? Array.from(paramsContainer.childNodes).filter((node) => node.nodeType === 1 && node.localName === 'Parameter' && node.hasAttribute('Id')) : [];
       const returnType = childText(op, 'ReturnType');
+
+      // 收集方法详情用于计算重载
+      methodDetails.push({ name: methodName.toLowerCase(), paramCount: params.length });
 
       if (visibility.includes('+') || !visibility) publicMethodCount += 1;
       if (!isBuiltinType(returnType) && normalizeTypeName(returnType) !== className && normalizeTypeName(returnType)) {
@@ -510,31 +760,48 @@ function parseClassDiagram(xmlDoc, sourceName) {
 
     const attrCount = attributeNodes.length;
     const opCount = operationNodes.length;
+    const dit = calcDit(classId);
+    const noc = parentChildCount.get(classId) || 0;
+    const nop = attrCount; // NOP = Number of Properties (属性数)
+    const nom = opCount; // NOM = Number of Methods (方法数)
+    
+    // 计算 NOO 和 overrideRatio (子类重写方法数 / 父类方法数)
+    const { noo, parentNom } = dit > 0 ? calcNooAndParentMethods(classId, methodNames) : { noo: 0, parentNom: 0 };
+    const overrideRatio = parentNom > 0 ? +(noo / parentNom).toFixed(2) : 0;
+    
+    // 调试日志：输出 overrideRatio 计算过程
+    if (dit > 0) {
+      console.log(`[${className}] DIT=${dit}, NOO=${noo}, 父类NOM=${parentNom}, overrideRatio=${overrideRatio}`);
+    }
+    
+    // 计算 overloadRatio (重载方法数 / NOM)
+    const overloadRatio = calcOverloadRatio(methodDetails, nom);
+    
+    // 调试日志：输出方法详情
+    console.log(`[${className}] NOM=${nom}, methodDetails:`, methodDetails);
+    
+    // 计算 POD (缺陷概率): POD = 1 - (1 - CBO/20) * (1 - DIT/7) * (1 - NOM/30)
+    const pod = calcPod(couplings.size, dit, nom);
 
     classes.push({
       className,
       wmc: opCount,
-      dit: 0,
-      noc: 0,
+      dit,
+      noc,
       cbo: couplings.size,
       rfc: opCount + couplings.size,
       lcom: attrCount && opCount ? +(attrCount / opCount).toFixed(2) : 0,
-      nop: 0,
-      nom: 0,
-      noo: 0,
-      pod: 0,
-      overrideRatio: 0,
-      overloadRatio: 0,
+      nop,
+      nom,
+      noo,
+      pod,
+      overrideRatio,
+      overloadRatio,
       sk: 0,
       dac: couplings.size,
       moa: couplings.size,
-      mfa: opCount ? +(publicMethodCount / opCount).toFixed(2) : 0,
       cam: opCount ? +(parameterCount / opCount).toFixed(2) : 0,
       cis: publicMethodCount,
-      nsc: 0,
-      coa: attrCount ? +(Math.min(1, opCount / attrCount)).toFixed(2) : 0,
-      size1: attrCount,
-      mpc: opCount,
       aif: 0,
       mif: 0,
     });
@@ -706,7 +973,6 @@ function buildAiAnalysisContext() {
       rfc: row.rfc,
       lcom: row.lcom,
       moa: row.moa,
-      mfa: row.mfa,
       cam: row.cam,
       riskScore: row.risk,
     }));
@@ -870,13 +1136,8 @@ function deriveRows(metrics) {
       sk: ensureNumber(c.sk),
       dac: ensureNumber(c.dac),
       moa: ensureNumber(c.moa),
-      mfa: ensureNumber(c.mfa),
       cam: ensureNumber(c.cam),
       cis: ensureNumber(c.cis),
-      nsc: ensureNumber(c.nsc),
-      coa: ensureNumber(c.coa),
-      size1: ensureNumber(c.size1),
-      mpc: ensureNumber(c.mpc),
       aif: ensureNumber(c.aif),
       mif: ensureNumber(c.mif),
     };
@@ -1064,13 +1325,8 @@ function renderTable() {
       <td>${row.sk.toFixed(2)}</td>
       <td>${row.dac}</td>
       <td>${row.moa}</td>
-      <td>${row.mfa.toFixed(2)}</td>
       <td>${row.cam.toFixed(2)}</td>
       <td>${row.cis}</td>
-      <td>${row.nsc}</td>
-      <td>${row.coa.toFixed(2)}</td>
-      <td>${row.size1}</td>
-      <td>${row.mpc}</td>
       <td>${row.aif.toFixed(2)}</td>
       <td>${row.mif.toFixed(2)}</td>
     </tr>`;
@@ -1081,7 +1337,7 @@ function renderTable() {
       <thead>
         <tr>
           <th>类名</th>
-          ${['WMC', 'DIT', 'NOC', 'CBO', 'RFC', 'LCOM', 'NOP', 'NOM', 'NOO', 'POD', 'overrideRatio', 'overloadRatio', 'SK', 'DAC', 'MOA', 'MFA', 'CAM', 'CIS', 'NSC', 'COA', 'Size1', 'MPC', 'AIF', 'MIF'].map(metricHeader).join('')}
+          ${['WMC', 'DIT', 'NOC', 'CBO', 'RFC', 'LCOM', 'NOP', 'NOM', 'NOO', 'POD', 'overrideRatio', 'overloadRatio', 'SK', 'DAC', 'MOA', 'CAM', 'CIS', 'AIF', 'MIF'].map(metricHeader).join('')}
         </tr>
       </thead>
       <tbody>${body}</tbody>
@@ -1521,13 +1777,8 @@ function toXml(rows) {
     lines.push(`    <SK>${row.sk.toFixed(2)}</SK>`);
     lines.push(`    <DAC>${row.dac}</DAC>`);
     lines.push(`    <MOA>${row.moa}</MOA>`);
-    lines.push(`    <MFA>${row.mfa.toFixed(2)}</MFA>`);
     lines.push(`    <CAM>${row.cam.toFixed(2)}</CAM>`);
     lines.push(`    <CIS>${row.cis}</CIS>`);
-    lines.push(`    <NSC>${row.nsc}</NSC>`);
-    lines.push(`    <COA>${row.coa.toFixed(2)}</COA>`);
-    lines.push(`    <Size1>${row.size1}</Size1>`);
-    lines.push(`    <MPC>${row.mpc}</MPC>`);
     lines.push(`    <AIF>${row.aif.toFixed(2)}</AIF>`);
     lines.push(`    <MIF>${row.mif.toFixed(2)}</MIF>`);
     lines.push('  </class>');

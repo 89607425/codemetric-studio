@@ -141,8 +141,8 @@ mvn exec:java "-Dexec.args=serve --port 9090"
 **输出指标**：
 - CK 核心：WMC、DIT、NOC、CBO、RFC、LCOM
 - 多态性：NOP、NOM、NOO、POD、OverrideRatio、OverloadRatio
-- 扩展：SK、DAC、MOA、MFA、CAM、CIS、NSC
-- 新增：COA、Size1、MPC、AIF、MIF
+- 扩展：SK、DAC、MOA、CAM、CIS
+- 新增：AIF、MIF
 
 ---
 

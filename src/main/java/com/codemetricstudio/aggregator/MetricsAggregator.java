@@ -77,13 +77,8 @@ public class MetricsAggregator {
             classMetrics.setSk(extMetrics.getSk());
             classMetrics.setDac(extMetrics.getDac());
             classMetrics.setMoa(extMetrics.getMoa());
-            classMetrics.setMfa(extMetrics.getMfa());
             classMetrics.setCam(extMetrics.getCam());
             classMetrics.setCis(extMetrics.getCis());
-            classMetrics.setNsc(extMetrics.getNsc());
-            classMetrics.setCoa(extMetrics.getCoa());
-            classMetrics.setSize1(extMetrics.getSize1());
-            classMetrics.setMpc(extMetrics.getMpc());
             classMetrics.setAif(extMetrics.getAif());
             classMetrics.setMif(extMetrics.getMif());
 

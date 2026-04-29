@@ -4,11 +4,8 @@ import com.codemetricstudio.model.ExtendedMetrics;
 import com.codemetricstudio.model.ParsedClass;
 import com.codemetricstudio.model.ParsedMethod;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -34,12 +31,7 @@ import java.util.Set;
  *    计算：作为实例变量的用户定义类型数
  *    解读：高MOA表明良好的组合设计，但过高可能意味着类承担过多聚合职责
  *
- * 4. MFA (Measure of Functional Abstraction) - 功能抽象度量
- *    特点：衡量类的抽象层次和依赖反转倾向
- *    计算：外部方法调用数 / (内部方法调用数 + 外部方法调用数)
- *    解读：高MFA表明良好的抽象设计，符合依赖倒置原则
- *
- * 5. CAM (Computational Abstraction Metric) - 计算抽象度量
+ * 4. CAM (Computational Abstraction Metric) - 计算抽象度量
  *    特点：衡量参数类型设计的复用程度
  *    计算：CAM = (r/t) * (1/t)，t=参数类型数，r=使用多种类型参数的方法数
  *    解读：高CAM表明参数设计具有良好的类型复用性
@@ -48,10 +40,6 @@ import java.util.Set;
  *    特点：衡量类的公共接口复杂度
  *    计算：public方法数量
  *    解读：高CIS可能表明类承担过多职责（违反单一职责原则）
- *
- * 7. NSC (Number of Static Methods) - 静态方法数
- *    特点：反映类的过程式设计倾向
- *    解读：高NSC可能表明过度使用静态方法，违反OOP原则
  */
 public class ExtendedMetricsCalculator {
 
@@ -77,32 +65,17 @@ public class ExtendedMetricsCalculator {
         // MOA: 聚合度量
         metrics.setMoa(calculateMoa(parsedClass, projectClasses));
 
-        // MFA: 功能抽象度量
-        metrics.setMfa(calculateMfa(parsedClass));
-
         // CAM: 计算抽象度量
         metrics.setCam(calculateCam(parsedClass));
 
         // CIS: 类接口大小 = public方法数
         metrics.setCis(calculateCis(parsedClass));
 
-        // NSC: 静态方法数
-        metrics.setNsc(calculateNsc(parsedClass));
-
         // ADC: 调用图平均继承深度（简化计算）
         metrics.setAdc(calculateAdc(parsedClass));
 
         metrics.setDit(dit);
         metrics.setNoc(noc);
-
-        // COA: 类内方法内聚性
-        metrics.setCoa(calculateCoa(parsedClass));
-
-        // Size1: 类大小（成员变量数）
-        metrics.setSize1(parsedClass.getFieldTypes().size());
-
-        // MPC: 类的方法总数
-        metrics.setMpc(calculateMpc(parsedClass));
 
         // AIF: 属性继承因子
         metrics.setAif(calculateAif(parsedClass, parentClass));
@@ -111,55 +84,6 @@ public class ExtendedMetricsCalculator {
         metrics.setMif(calculateMif(parsedClass, parentClass));
 
         return metrics;
-    }
-
-    /**
-     * 计算类内方法内聚性 (Cohesion Among Methods)
-     * COA = P / (M * (P + 1) / 2)，其中 P=共享字段的方法对数，M=方法数
-     */
-    private double calculateCoa(ParsedClass parsedClass) {
-        int methodCount = parsedClass.getMethods().size();
-        if (methodCount <= 1) {
-            return 1.0; // 单方法类视为完全内聚
-        }
-
-        // 获取每个方法访问的字段
-        List<Set<String>> methodFields = new ArrayList<>();
-        for (ParsedMethod method : parsedClass.getMethods()) {
-            Set<String> accessed = new HashSet<>(method.getReferencedFields());
-            accessed.retainAll(parsedClass.getFieldNames()); // 只计算类内字段
-            methodFields.add(accessed);
-        }
-
-        // 计算共享字段的方法对数
-        int sharedPairs = 0;
-        for (int i = 0; i < methodFields.size(); i++) {
-            for (int j = i + 1; j < methodFields.size(); j++) {
-                Set<String> intersection = new HashSet<>(methodFields.get(i));
-                intersection.retainAll(methodFields.get(j));
-                if (!intersection.isEmpty()) {
-                    sharedPairs++;
-                }
-            }
-        }
-
-        int maxPairs = methodCount * (methodCount - 1) / 2;
-        if (maxPairs == 0) {
-            return 1.0;
-        }
-
-        return (double) sharedPairs / maxPairs;
-    }
-
-    /**
-     * 计算类的方法总数 (Methods per Class)
-     * MPC = 本类定义的方法数 + 继承的方法数
-     */
-    private int calculateMpc(ParsedClass parsedClass) {
-        int ownMethods = parsedClass.getMethods().size();
-        // 简化计算：假设每个继承层级增加一定方法
-        // 实际应该通过父类传递链计算
-        return ownMethods + 2; // 简化：每个类至少有Object的2个方法(toString, equals)
     }
 
     /**
@@ -343,39 +267,6 @@ public class ExtendedMetricsCalculator {
     }
 
     /**
-     * 计算功能抽象度量 (Measure of Functional Abstraction)
-     * MFA = 外部方法调用数 / 总方法调用数
-     */
-    private double calculateMfa(ParsedClass parsedClass) {
-        int totalCalls = 0;
-        int externalCalls = 0;
-
-        for (ParsedMethod method : parsedClass.getMethods()) {
-            Set<String> calledMethods = method.getCalledMethods();
-            totalCalls += calledMethods.size();
-
-            // 外部调用：调用同方法名但非本类的方法
-            for (String called : calledMethods) {
-                boolean isInternal = false;
-                for (ParsedMethod selfMethod : parsedClass.getMethods()) {
-                    if (selfMethod.getMethodName().equals(called)) {
-                        isInternal = true;
-                        break;
-                    }
-                }
-                if (!isInternal) {
-                    externalCalls++;
-                }
-            }
-        }
-
-        if (totalCalls == 0) {
-            return 0.0;
-        }
-        return (double) externalCalls / totalCalls;
-    }
-
-    /**
      * 计算计算抽象度量 (Computational Abstraction Metric)
      * CAM = (r/t) * (1/t) 其中 t=参数类型数，r=使用多种类型参数的方法数
      */
@@ -435,19 +326,6 @@ public class ExtendedMetricsCalculator {
         int count = 0;
         for (ParsedMethod method : parsedClass.getMethods()) {
             if (!method.isPrivate() && !method.isStatic()) {
-                count++;
-            }
-        }
-        return count;
-    }
-
-    /**
-     * 计算静态方法数量 (Number of Static Methods)
-     */
-    private int calculateNsc(ParsedClass parsedClass) {
-        int count = 0;
-        for (ParsedMethod method : parsedClass.getMethods()) {
-            if (method.isStatic()) {
                 count++;
             }
         }
