@@ -28,6 +28,7 @@ public class ClassMetrics {
     private int cis;    // Class Interface Size
 
     // ===== 新增度量 =====
+    private double aif;   // Attribute Inheritance Factor (属性继承因子)
     private double mif;   // Method Inheritance Factor (方法继承因子)
 
     public ClassMetrics() {
