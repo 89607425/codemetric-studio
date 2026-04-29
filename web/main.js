@@ -443,6 +443,25 @@ function buildDiagramLoc(summary) {
   };
 }
 
+function parseFpTags(commentText) {
+  const text = String(commentText || '');
+  const tags = {};
+  const pattern = /([A-Za-z]+)\s*=\s*([A-Za-z0-9_.-]+)/g;
+  let match = pattern.exec(text);
+  while (match) {
+    tags[match[1].toUpperCase()] = match[2];
+    match = pattern.exec(text);
+  }
+  return {
+    type: (tags.TYPE || '').toUpperCase(),
+    store: (tags.STORE || '').toUpperCase(),
+    ftr: Number(tags.FTR || 0),
+    der: Number(tags.DER || 0),
+    det: Number(tags.DET || 0),
+    ret: Number(tags.RET || 0),
+  };
+}
+
 function extractDiagramKind(xmlDoc) {
   if (allByLocalName(xmlDoc, 'ClassDiagram').length) return 'class';
   if (allByLocalName(xmlDoc, 'UseCaseDiagram').length) return 'usecase';
@@ -833,7 +852,15 @@ function parseUseCaseDiagram(xmlDoc, sourceName) {
   const associations = allByLocalName(xmlDoc, 'UseCaseAssociation').filter((node) => node.hasAttribute('Id'));
 
   const actors = actorNodes.map((node) => ({ id: node.getAttribute('Id'), name: getOomNodeName(node) }));
-  const useCases = useCaseNodes.map((node) => ({ id: node.getAttribute('Id'), name: getOomNodeName(node) }));
+  const useCases = useCaseNodes.map((node) => {
+    const comment = childText(node, 'Comment');
+    return {
+      id: node.getAttribute('Id'),
+      name: getOomNodeName(node),
+      comment,
+      fpTags: parseFpTags(comment),
+    };
+  });
   const actorMap = new Map(actors.map((item) => [item.id, item]));
   const useCaseMap = new Map(useCases.map((item) => [item.id, item]));
   const actorDegree = new Map(actors.map((item) => [item.id, 0]));
@@ -1460,6 +1487,29 @@ function autoEstimateFunctionPoint() {
 
   if (state.raw.useCaseDiagram) {
     const d = state.raw.useCaseDiagram;
+    const taggedUseCases = (d.useCases || []).filter((u) => u.fpTags && (u.fpTags.ftr > 0 || u.fpTags.der > 0 || u.fpTags.det > 0 || u.fpTags.ret > 0));
+
+    if (taggedUseCases.length > 0) {
+      taggedUseCases.forEach((uc) => {
+        const type = ['EI', 'EO', 'EQ'].includes(uc.fpTags.type) ? uc.fpTags.type : 'EI';
+        const ftr = Math.max(0, ensureNumber(uc.fpTags.ftr));
+        const der = Math.max(0, ensureNumber(uc.fpTags.der));
+        const txLevel = txComplexity(type, ftr, der);
+        state.fpCounts[type][txLevel] += 1;
+
+        if (uc.fpTags.det > 0 && uc.fpTags.ret > 0) {
+          const storeType = uc.fpTags.store === 'EIF' ? 'EIF' : 'ILF';
+          const det = Math.max(0, ensureNumber(uc.fpTags.det));
+          const ret = Math.max(0, ensureNumber(uc.fpTags.ret));
+          const dataLevel = dataComplexity(storeType, ret, det);
+          state.fpCounts[storeType][dataLevel] += 1;
+        }
+      });
+      calcFunctionPoint();
+      setStatus('fp-status', `已基于用例图注释中的 FTR/DER/DET/RET 自动计算：读取到 ${taggedUseCases.length} 个带指标的用例。`);
+      return;
+    }
+
     state.fpCounts.EI.low += d.useCaseSimple;
     state.fpCounts.EI.avg += d.useCaseAverage;
     state.fpCounts.EI.high += d.useCaseComplex;
@@ -1467,7 +1517,7 @@ function autoEstimateFunctionPoint() {
     state.fpCounts.ILF.avg += d.actorAverage;
     state.fpCounts.ILF.high += d.actorComplex;
     calcFunctionPoint();
-    setStatus('fp-status', `已基于用例图 .oom 自动估算：用例 ${d.useCases.length} 个，参与者 ${d.actors.length} 个。结果为启发式映射，建议结合实验报告再校正。`);
+    setStatus('fp-status', `未检测到用例注释中的 FTR/DER/DET/RET，已退回启发式估算：用例 ${d.useCases.length} 个，参与者 ${d.actors.length} 个。`);
     return;
   }
 

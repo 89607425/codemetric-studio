@@ -2285,6 +2285,7 @@ LABL 0 新宋体,8,N</a:FontList>
 <a:ObjectID>316C0B68-8417-4604-BE8B-44FD9C307E3A</a:ObjectID>
 <a:Name>注册</a:Name>
 <a:Code>注册</a:Code>
+<a:Comment>TYPE=EI;FTR=2;DER=8;STORE=ILF;DET=6;RET=2</a:Comment>
 <a:CreationDate>1763782351</a:CreationDate>
 <a:Creator>索隆</a:Creator>
 <a:ModificationDate>1763783359</a:ModificationDate>
@@ -2294,6 +2295,7 @@ LABL 0 新宋体,8,N</a:FontList>
 <a:ObjectID>4E2C844C-05C2-4405-A809-7E0410D65558</a:ObjectID>
 <a:Name>核实医生信息</a:Name>
 <a:Code>核实医生信息</a:Code>
+<a:Comment>TYPE=EQ;FTR=2;DER=5;STORE=EIF;DET=5;RET=1</a:Comment>
 <a:CreationDate>1763782351</a:CreationDate>
 <a:Creator>索隆</a:Creator>
 <a:ModificationDate>1763782816</a:ModificationDate>
@@ -2303,6 +2305,7 @@ LABL 0 新宋体,8,N</a:FontList>
 <a:ObjectID>97066823-53A5-4F63-8643-464E1093A6CF</a:ObjectID>
 <a:Name>回复处方有效无效</a:Name>
 <a:Code>回复处方有效无效</a:Code>
+<a:Comment>TYPE=EO;FTR=1;DER=4</a:Comment>
 <a:CreationDate>1763782351</a:CreationDate>
 <a:Creator>索隆</a:Creator>
 <a:ModificationDate>1763782787</a:ModificationDate>
@@ -2312,6 +2315,7 @@ LABL 0 新宋体,8,N</a:FontList>
 <a:ObjectID>89714E9E-CE53-4B6D-B801-261CFC432D6F</a:ObjectID>
 <a:Name>接收处方确认请求</a:Name>
 <a:Code>接收处方确认请求</a:Code>
+<a:Comment>TYPE=EI;FTR=1;DER=5</a:Comment>
 <a:CreationDate>1763782351</a:CreationDate>
 <a:Creator>索隆</a:Creator>
 <a:ModificationDate>1763783314</a:ModificationDate>
@@ -2321,6 +2325,7 @@ LABL 0 新宋体,8,N</a:FontList>
 <a:ObjectID>F68E3C3B-E945-4C33-8AF8-429D6513EA96</a:ObjectID>
 <a:Name>录入及提交处方</a:Name>
 <a:Code>录入及提交处方</a:Code>
+<a:Comment>TYPE=EI;FTR=2;DER=10;STORE=ILF;DET=8;RET=2</a:Comment>
 <a:CreationDate>1763782351</a:CreationDate>
 <a:Creator>索隆</a:Creator>
 <a:ModificationDate>1763783329</a:ModificationDate>
@@ -2330,6 +2335,7 @@ LABL 0 新宋体,8,N</a:FontList>
 <a:ObjectID>59DE1E7C-B581-43D3-8B31-457A7D960F9C</a:ObjectID>
 <a:Name>购买药品</a:Name>
 <a:Code>购买药品</a:Code>
+<a:Comment>TYPE=EI;FTR=3;DER=12;STORE=ILF;DET=9;RET=3</a:Comment>
 <a:CreationDate>1763782351</a:CreationDate>
 <a:Creator>索隆</a:Creator>
 <a:ModificationDate>1763783339</a:ModificationDate>
@@ -2339,6 +2345,7 @@ LABL 0 新宋体,8,N</a:FontList>
 <a:ObjectID>B4B74A1D-0683-4E93-8BF1-9D3EDF72330F</a:ObjectID>
 <a:Name>登录</a:Name>
 <a:Code>登录</a:Code>
+<a:Comment>TYPE=EI;FTR=1;DER=3;STORE=ILF;DET=4;RET=1</a:Comment>
 <a:CreationDate>1763782351</a:CreationDate>
 <a:Creator>索隆</a:Creator>
 <a:ModificationDate>1763783339</a:ModificationDate>
@@ -2348,6 +2355,7 @@ LABL 0 新宋体,8,N</a:FontList>
 <a:ObjectID>447A7604-364D-4AD4-89CE-B9E57E6E6490</a:ObjectID>
 <a:Name>签订授权协议书</a:Name>
 <a:Code>签订授权协议书</a:Code>
+<a:Comment>TYPE=EO;FTR=1;DER=4</a:Comment>
 <a:CreationDate>1763782351</a:CreationDate>
 <a:Creator>索隆</a:Creator>
 <a:ModificationDate>1763783350</a:ModificationDate>
@@ -2357,6 +2365,7 @@ LABL 0 新宋体,8,N</a:FontList>
 <a:ObjectID>2CF2567C-E1F0-4C53-83FB-D70322BD0430</a:ObjectID>
 <a:Name>填写顾客资料以及支付方式</a:Name>
 <a:Code>填写顾客资料以及支付方式</a:Code>
+<a:Comment>TYPE=EI;FTR=2;DER=11;STORE=ILF;DET=10;RET=3</a:Comment>
 <a:CreationDate>1763782351</a:CreationDate>
 <a:Creator>索隆</a:Creator>
 <a:ModificationDate>1763783359</a:ModificationDate>
@@ -2366,6 +2375,7 @@ LABL 0 新宋体,8,N</a:FontList>
 <a:ObjectID>063E73DE-912F-4C12-BFA0-4E7E10F339D0</a:ObjectID>
 <a:Name>计算药品价格并且邮寄药品</a:Name>
 <a:Code>计算药品价格并且邮寄药品</a:Code>
+<a:Comment>TYPE=EO;FTR=2;DER=9;STORE=ILF;DET=7;RET=2</a:Comment>
 <a:CreationDate>1763782351</a:CreationDate>
 <a:Creator>索隆</a:Creator>
 <a:ModificationDate>1763783070</a:ModificationDate>
@@ -2375,6 +2385,7 @@ LABL 0 新宋体,8,N</a:FontList>
 <a:ObjectID>307AF6A2-E3B8-421D-97EC-A77EAA5924A0</a:ObjectID>
 <a:Name>向顾客发送电子邮件</a:Name>
 <a:Code>向顾客发送电子邮件</a:Code>
+<a:Comment>TYPE=EO;FTR=1;DER=3</a:Comment>
 <a:CreationDate>1763782351</a:CreationDate>
 <a:Creator>索隆</a:Creator>
 <a:ModificationDate>1763783045</a:ModificationDate>
@@ -2384,6 +2395,7 @@ LABL 0 新宋体,8,N</a:FontList>
 <a:ObjectID>B13C8BFB-6E70-4059-9742-2A2ACB302285</a:ObjectID>
 <a:Name>医生回复处方无效</a:Name>
 <a:Code>医生回复处方无效</a:Code>
+<a:Comment>TYPE=EO;FTR=1;DER=2</a:Comment>
 <a:CreationDate>1763782351</a:CreationDate>
 <a:Creator>索隆</a:Creator>
 <a:ModificationDate>1763783264</a:ModificationDate>
@@ -2393,6 +2405,7 @@ LABL 0 新宋体,8,N</a:FontList>
 <a:ObjectID>E7D8F8C8-4BDA-4FAE-B9CA-03161AEFDF6B</a:ObjectID>
 <a:Name>医生7天未给答复</a:Name>
 <a:Code>医生7天未给答复</a:Code>
+<a:Comment>TYPE=EO;FTR=1;DER=2</a:Comment>
 <a:CreationDate>1763782351</a:CreationDate>
 <a:Creator>索隆</a:Creator>
 <a:ModificationDate>1763783290</a:ModificationDate>
@@ -2402,6 +2415,7 @@ LABL 0 新宋体,8,N</a:FontList>
 <a:ObjectID>37567482-0B8E-405F-A247-98F73C871E1E</a:ObjectID>
 <a:Name>取消处方</a:Name>
 <a:Code>取消处方</a:Code>
+<a:Comment>TYPE=EI;FTR=1;DER=2</a:Comment>
 <a:CreationDate>1763782351</a:CreationDate>
 <a:Creator>索隆</a:Creator>
 <a:ModificationDate>1763783290</a:ModificationDate>
@@ -2411,6 +2425,7 @@ LABL 0 新宋体,8,N</a:FontList>
 <a:ObjectID>41214A96-F725-4766-90F4-56B5DD828DCE</a:ObjectID>
 <a:Name>向医生发送请求</a:Name>
 <a:Code>向医生发送请求</a:Code>
+<a:Comment>TYPE=EO;FTR=1;DER=3</a:Comment>
 <a:CreationDate>1763782351</a:CreationDate>
 <a:Creator>索隆</a:Creator>
 <a:ModificationDate>1763783314</a:ModificationDate>

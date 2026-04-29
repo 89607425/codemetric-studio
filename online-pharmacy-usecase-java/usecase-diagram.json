@@ -1,0 +1,220 @@
+{
+  "actors": [
+    {
+      "id": "o66",
+      "name": "医生"
+    },
+    {
+      "id": "o67",
+      "name": "顾客"
+    },
+    {
+      "id": "o68",
+      "name": "药店系统"
+    }
+  ],
+  "useCases": [
+    {
+      "id": "o69",
+      "name": "注册",
+      "comment": "TYPE=EI;FTR=2;DER=8;STORE=ILF;DET=6;RET=2",
+      "fpTags": {
+        "type": "EI",
+        "store": "ILF",
+        "ftr": 2,
+        "der": 8,
+        "det": 6,
+        "ret": 2
+      }
+    },
+    {
+      "id": "o70",
+      "name": "核实医生信息",
+      "comment": "TYPE=EQ;FTR=2;DER=5;STORE=EIF;DET=5;RET=1",
+      "fpTags": {
+        "type": "EQ",
+        "store": "EIF",
+        "ftr": 2,
+        "der": 5,
+        "det": 5,
+        "ret": 1
+      }
+    },
+    {
+      "id": "o71",
+      "name": "回复处方有效无效",
+      "comment": "TYPE=EO;FTR=1;DER=4",
+      "fpTags": {
+        "type": "EO",
+        "store": "",
+        "ftr": 1,
+        "der": 4,
+        "det": 0,
+        "ret": 0
+      }
+    },
+    {
+      "id": "o72",
+      "name": "接收处方确认请求",
+      "comment": "TYPE=EI;FTR=1;DER=5",
+      "fpTags": {
+        "type": "EI",
+        "store": "",
+        "ftr": 1,
+        "der": 5,
+        "det": 0,
+        "ret": 0
+      }
+    },
+    {
+      "id": "o73",
+      "name": "录入及提交处方",
+      "comment": "TYPE=EI;FTR=2;DER=10;STORE=ILF;DET=8;RET=2",
+      "fpTags": {
+        "type": "EI",
+        "store": "ILF",
+        "ftr": 2,
+        "der": 10,
+        "det": 8,
+        "ret": 2
+      }
+    },
+    {
+      "id": "o74",
+      "name": "购买药品",
+      "comment": "TYPE=EI;FTR=3;DER=12;STORE=ILF;DET=9;RET=3",
+      "fpTags": {
+        "type": "EI",
+        "store": "ILF",
+        "ftr": 3,
+        "der": 12,
+        "det": 9,
+        "ret": 3
+      }
+    },
+    {
+      "id": "o75",
+      "name": "登录",
+      "comment": "TYPE=EI;FTR=1;DER=3;STORE=ILF;DET=4;RET=1",
+      "fpTags": {
+        "type": "EI",
+        "store": "ILF",
+        "ftr": 1,
+        "der": 3,
+        "det": 4,
+        "ret": 1
+      }
+    },
+    {
+      "id": "o76",
+      "name": "签订授权协议书",
+      "comment": "TYPE=EO;FTR=1;DER=4",
+      "fpTags": {
+        "type": "EO",
+        "store": "",
+        "ftr": 1,
+        "der": 4,
+        "det": 0,
+        "ret": 0
+      }
+    },
+    {
+      "id": "o77",
+      "name": "填写顾客资料以及支付方式",
+      "comment": "TYPE=EI;FTR=2;DER=11;STORE=ILF;DET=10;RET=3",
+      "fpTags": {
+        "type": "EI",
+        "store": "ILF",
+        "ftr": 2,
+        "der": 11,
+        "det": 10,
+        "ret": 3
+      }
+    },
+    {
+      "id": "o78",
+      "name": "计算药品价格并且邮寄药品",
+      "comment": "TYPE=EO;FTR=2;DER=9;STORE=ILF;DET=7;RET=2",
+      "fpTags": {
+        "type": "EO",
+        "store": "ILF",
+        "ftr": 2,
+        "der": 9,
+        "det": 7,
+        "ret": 2
+      }
+    },
+    {
+      "id": "o79",
+      "name": "向顾客发送电子邮件",
+      "comment": "TYPE=EO;FTR=1;DER=3",
+      "fpTags": {
+        "type": "EO",
+        "store": "",
+        "ftr": 1,
+        "der": 3,
+        "det": 0,
+        "ret": 0
+      }
+    },
+    {
+      "id": "o80",
+      "name": "医生回复处方无效",
+      "comment": "TYPE=EO;FTR=1;DER=2",
+      "fpTags": {
+        "type": "EO",
+        "store": "",
+        "ftr": 1,
+        "der": 2,
+        "det": 0,
+        "ret": 0
+      }
+    },
+    {
+      "id": "o81",
+      "name": "医生7天未给答复",
+      "comment": "TYPE=EO;FTR=1;DER=2",
+      "fpTags": {
+        "type": "EO",
+        "store": "",
+        "ftr": 1,
+        "der": 2,
+        "det": 0,
+        "ret": 0
+      }
+    },
+    {
+      "id": "o82",
+      "name": "取消处方",
+      "comment": "TYPE=EI;FTR=1;DER=2",
+      "fpTags": {
+        "type": "EI",
+        "store": "",
+        "ftr": 1,
+        "der": 2,
+        "det": 0,
+        "ret": 0
+      }
+    },
+    {
+      "id": "o83",
+      "name": "向医生发送请求",
+      "comment": "TYPE=EO;FTR=1;DER=3",
+      "fpTags": {
+        "type": "EO",
+        "store": "",
+        "ftr": 1,
+        "der": 3,
+        "det": 0,
+        "ret": 0
+      }
+    }
+  ],
+  "associations": 13,
+  "actorSimple": 0,
+  "actorAverage": 1,
+  "actorComplex": 2,
+  "useCaseSimple": 12,
+  "useCaseAverage": 3,
+  "useCaseComplex": 0
+}
